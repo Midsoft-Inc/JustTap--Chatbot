@@ -1,107 +1,97 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-
 import { env } from '../config/env.js';
+import { mongoDb } from '../db/mongo.js';
 import { KnowledgeRecord, SearchHit } from '../models/types.js';
 
-let client: QdrantClient | null = null;
-
 /**
- * Create Qdrant client only when Qdrant is actually required.
- * In mock mode, Qdrant is completely disabled.
+ * MongoDB Atlas Vector Search adapter.
+ *
+ * The public interface is intentionally kept the same as the previous
+ * vector adapter so the existing RAG/LangChain and ingestion flow do not
+ * need to change. Only the vector database implementation is changed:
+ * Qdrant -> MongoDB Atlas Vector Search.
  */
-function getClient(): QdrantClient {
-  if (env.CHATBOT_MODE === 'mock') {
-    throw new Error('Qdrant is disabled in mock mode');
-  }
-
-  if (!client) {
-    client = new QdrantClient({
-      url: env.QDRANT_URL,
-      ...(env.QDRANT_API_KEY
-        ? { apiKey: env.QDRANT_API_KEY }
-        : {})
-    });
-  }
-
-  return client;
-}
 
 /**
- * Create the Qdrant collection if it does not exist.
+ * MongoDB Atlas owns the vector index. There is no local collection to
+ * create, so this remains a no-op to preserve the existing startup/ingest API.
  */
 export async function ensureCollection(): Promise<void> {
-  if (env.CHATBOT_MODE === 'mock') {
-    return;
-  }
+  if (env.CHATBOT_MODE === 'mock') return;
 
-  const qdrant = getClient();
-
-  const collections = await qdrant.getCollections();
-
-  const exists = collections.collections.some(
-    (collection) => collection.name === env.QDRANT_COLLECTION
-  );
-
-  if (!exists) {
-    await qdrant.createCollection(env.QDRANT_COLLECTION, {
-      vectors: {
-        size: env.VECTOR_SIZE,
-        distance: 'Cosine'
-      }
-    });
-  }
+  // The Atlas Vector Search index is configured in MongoDB Atlas as
+  // `knowledge_vector_index`. connectMongo() also attempts to create it when
+  // it is not already present.
 }
 
 /**
- * Store an embedding vector in Qdrant.
+ * Store an embedding vector in MongoDB alongside its knowledge record.
+ * saveKnowledge() stores the normal knowledge fields; this function adds the
+ * embedding field used by Atlas Vector Search.
  */
 export async function upsertVector(
   record: KnowledgeRecord,
   vector: number[]
 ): Promise<void> {
-  if (env.CHATBOT_MODE === 'mock') {
-    return;
+  if (env.CHATBOT_MODE === 'mock') return;
+
+  if (vector.length !== env.VECTOR_SIZE) {
+    throw new Error(
+      `Invalid embedding dimension for ${record.id}: expected ${env.VECTOR_SIZE}, received ${vector.length}`
+    );
   }
 
-  const qdrant = getClient();
-
-  await qdrant.upsert(env.QDRANT_COLLECTION, {
-    wait: true,
-    points: [
-      {
-        id: record.id,
-        vector,
-        payload: {
-          ...record,
-          embedding: undefined
-        }
-      }
-    ]
-  });
+  await mongoDb()
+    .collection<KnowledgeRecord>('knowledge')
+    .updateOne(
+      { id: record.id },
+      { $set: { embedding: vector } },
+      { upsert: true }
+    );
 }
 
 /**
- * Search Qdrant using vector similarity.
+ * Search MongoDB Atlas using the existing embedding vector.
+ * The returned shape remains SearchHit[], so the existing hybrid RAG
+ * and LangChain layers continue to work unchanged.
  */
 export async function vectorSearch(
   vector: number[],
   limit: number = env.TOP_K_VECTOR
 ): Promise<SearchHit[]> {
-  if (env.CHATBOT_MODE === 'mock') {
-    return [];
+  if (env.CHATBOT_MODE === 'mock') return [];
+
+  if (vector.length !== env.VECTOR_SIZE) {
+    throw new Error(
+      `Invalid query embedding dimension: expected ${env.VECTOR_SIZE}, received ${vector.length}`
+    );
   }
 
-  const qdrant = getClient();
+  const safeLimit = Math.max(1, limit);
+  const numCandidates = Math.max(safeLimit * 10, 100);
 
-  const result = await qdrant.query(env.QDRANT_COLLECTION, {
-    query: vector,
-    limit,
-    with_payload: true
-  });
+  const results = await mongoDb()
+    .collection<KnowledgeRecord>('knowledge')
+    .aggregate<SearchHit>([
+      {
+        $vectorSearch: {
+          index: env.MONGODB_VECTOR_INDEX,
+          path: 'embedding',
+          queryVector: vector,
+          numCandidates,
+          limit: safeLimit
+        }
+      },
+      {
+        $set: {
+          score: { $meta: 'vectorSearchScore' }
+        }
+      }
+    ])
+    .toArray();
 
-  return result.points.map((point) => ({
-    ...(point.payload as unknown as KnowledgeRecord),
-    score: Number(point.score ?? 0),
+  return results.map((document) => ({
+    ...document,
+    score: Number(document.score ?? 0),
     sourceType: 'vector' as const
   }));
 }

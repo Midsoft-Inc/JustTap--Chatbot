@@ -8,7 +8,9 @@ import { ensureCollection } from './services/vector.js';
 import { chatRoutes } from './routes/chat.js';
 import { ticketRoutes } from './routes/tickets.js';
 import { healthRoutes } from './routes/health.js';
+import dns from 'node:dns';
 
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 const app = Fastify({ logger: true, bodyLimit: 512 * 1024 });
 
 await app.register(cors, { origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(',') });
