@@ -1,0 +1,961 @@
+[
+  {
+    "id": "svc_overview_001",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_overview",
+    "sub_service": null,
+    "intent": "knowledge",
+    "question": "What services does JustTap provide?",
+    "answer": "JustTap provides Home Services (Plumber, Electrician, Carpenter, AC Technician, Painter), Auto Services (Bike Mechanic, Car Mechanic, Car Wash), Domestic Services (Maid Service, Security Guard, Gardener, Cleaner), Technical Services (Software Developer, Web Designer, Mobile App Developer, Computer Repair Technician, Digital Marketing Expert), Education Services (Online Tutor, Spoken English Trainer, Computer Trainer, Coaching Institute), and Business Services (Accountant, Tax Consultant, CA, Insurance Agent, Financial Advisor).",
+    "keywords": [
+      "JustTap",
+      "services",
+      "service list",
+      "home services",
+      "auto services",
+      "domestic services",
+      "technical services",
+      "education services",
+      "business services"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "svc_002",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Plumber",
+    "intent": "service_booking",
+    "question": "I want to book Plumber.",
+    "answer": "To book Plumber, use the Plumber service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Plumber",
+      "book",
+      "booking",
+      "Home Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_003",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Plumber",
+    "intent": "service_price",
+    "question": "What is the price for Plumber?",
+    "answer": "Check the Plumber pricing information provided in the JustTap application.",
+    "keywords": [
+      "Plumber",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_004",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Electrician",
+    "intent": "service_booking",
+    "question": "I want to book Electrician.",
+    "answer": "To book Electrician, use the Electrician service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Electrician",
+      "book",
+      "booking",
+      "Home Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_005",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Electrician",
+    "intent": "service_price",
+    "question": "What is the price for Electrician?",
+    "answer": "Check the Electrician pricing information provided in the JustTap application.",
+    "keywords": [
+      "Electrician",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_006",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Carpenter",
+    "intent": "service_booking",
+    "question": "I want to book Carpenter.",
+    "answer": "To book Carpenter, use the Carpenter service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Carpenter",
+      "book",
+      "booking",
+      "Home Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_007",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Carpenter",
+    "intent": "service_price",
+    "question": "What is the price for Carpenter?",
+    "answer": "Check the Carpenter pricing information provided in the JustTap application.",
+    "keywords": [
+      "Carpenter",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_008",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "AC Technician",
+    "intent": "service_booking",
+    "question": "I want to book AC Technician.",
+    "answer": "To book AC Technician, use the AC Technician service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "AC Technician",
+      "book",
+      "booking",
+      "Home Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_009",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "AC Technician",
+    "intent": "service_price",
+    "question": "What is the price for AC Technician?",
+    "answer": "Check the AC Technician pricing information provided in the JustTap application.",
+    "keywords": [
+      "AC Technician",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_010",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Painter",
+    "intent": "service_booking",
+    "question": "I want to book Painter.",
+    "answer": "To book Painter, use the Painter service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Painter",
+      "book",
+      "booking",
+      "Home Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_011",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Painter",
+    "intent": "service_price",
+    "question": "What is the price for Painter?",
+    "answer": "Check the Painter pricing information provided in the JustTap application.",
+    "keywords": [
+      "Painter",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_012",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Bike Mechanic",
+    "intent": "service_booking",
+    "question": "I want to book Bike Mechanic.",
+    "answer": "To book Bike Mechanic, use the Bike Mechanic service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Bike Mechanic",
+      "book",
+      "booking",
+      "Auto Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_013",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Bike Mechanic",
+    "intent": "service_price",
+    "question": "What is the price for Bike Mechanic?",
+    "answer": "Check the Bike Mechanic pricing information provided in the JustTap application.",
+    "keywords": [
+      "Bike Mechanic",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_014",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Car Mechanic",
+    "intent": "service_booking",
+    "question": "I want to book Car Mechanic.",
+    "answer": "To book Car Mechanic, use the Car Mechanic service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Car Mechanic",
+      "book",
+      "booking",
+      "Auto Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_015",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Car Mechanic",
+    "intent": "service_price",
+    "question": "What is the price for Car Mechanic?",
+    "answer": "Check the Car Mechanic pricing information provided in the JustTap application.",
+    "keywords": [
+      "Car Mechanic",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_016",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Car Wash",
+    "intent": "service_booking",
+    "question": "I want to book Car Wash.",
+    "answer": "To book Car Wash, use the Car Wash service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Car Wash",
+      "book",
+      "booking",
+      "Auto Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_017",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Car Wash",
+    "intent": "service_price",
+    "question": "What is the price for Car Wash?",
+    "answer": "Check the Car Wash pricing information provided in the JustTap application.",
+    "keywords": [
+      "Car Wash",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_018",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Maid Service",
+    "intent": "service_booking",
+    "question": "I want to book Maid Service.",
+    "answer": "To book Maid Service, use the Maid Service service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Maid Service",
+      "book",
+      "booking",
+      "Domestic Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_019",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Maid Service",
+    "intent": "service_price",
+    "question": "What is the price for Maid Service?",
+    "answer": "Check the Maid Service pricing information provided in the JustTap application.",
+    "keywords": [
+      "Maid Service",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_020",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Security Guard",
+    "intent": "service_booking",
+    "question": "I want to book Security Guard.",
+    "answer": "To book Security Guard, use the Security Guard service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Security Guard",
+      "book",
+      "booking",
+      "Domestic Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_021",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Security Guard",
+    "intent": "service_price",
+    "question": "What is the price for Security Guard?",
+    "answer": "Check the Security Guard pricing information provided in the JustTap application.",
+    "keywords": [
+      "Security Guard",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_022",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Gardener",
+    "intent": "service_booking",
+    "question": "I want to book Gardener.",
+    "answer": "To book Gardener, use the Gardener service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Gardener",
+      "book",
+      "booking",
+      "Domestic Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_023",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Gardener",
+    "intent": "service_price",
+    "question": "What is the price for Gardener?",
+    "answer": "Check the Gardener pricing information provided in the JustTap application.",
+    "keywords": [
+      "Gardener",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_024",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Cleaner",
+    "intent": "service_booking",
+    "question": "I want to book Cleaner.",
+    "answer": "To book Cleaner, use the Cleaner service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Cleaner",
+      "book",
+      "booking",
+      "Domestic Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_025",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Cleaner",
+    "intent": "service_price",
+    "question": "What is the price for Cleaner?",
+    "answer": "Check the Cleaner pricing information provided in the JustTap application.",
+    "keywords": [
+      "Cleaner",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_026",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Software Developer",
+    "intent": "service_booking",
+    "question": "I want to book Software Developer.",
+    "answer": "To book Software Developer, use the Software Developer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Software Developer",
+      "book",
+      "booking",
+      "Technical Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_027",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Software Developer",
+    "intent": "service_price",
+    "question": "What is the price for Software Developer?",
+    "answer": "Check the Software Developer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Software Developer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_028",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Web Designer",
+    "intent": "service_booking",
+    "question": "I want to book Web Designer.",
+    "answer": "To book Web Designer, use the Web Designer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Web Designer",
+      "book",
+      "booking",
+      "Technical Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_029",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Web Designer",
+    "intent": "service_price",
+    "question": "What is the price for Web Designer?",
+    "answer": "Check the Web Designer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Web Designer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_030",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Mobile App Developer",
+    "intent": "service_booking",
+    "question": "I want to book Mobile App Developer.",
+    "answer": "To book Mobile App Developer, use the Mobile App Developer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Mobile App Developer",
+      "book",
+      "booking",
+      "Technical Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_031",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Mobile App Developer",
+    "intent": "service_price",
+    "question": "What is the price for Mobile App Developer?",
+    "answer": "Check the Mobile App Developer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Mobile App Developer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_032",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Computer Repair Technician",
+    "intent": "service_booking",
+    "question": "I want to book Computer Repair Technician.",
+    "answer": "To book Computer Repair Technician, use the Computer Repair Technician service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Computer Repair Technician",
+      "book",
+      "booking",
+      "Technical Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_033",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Computer Repair Technician",
+    "intent": "service_price",
+    "question": "What is the price for Computer Repair Technician?",
+    "answer": "Check the Computer Repair Technician pricing information provided in the JustTap application.",
+    "keywords": [
+      "Computer Repair Technician",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_034",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Digital Marketing Expert",
+    "intent": "service_booking",
+    "question": "I want to book Digital Marketing Expert.",
+    "answer": "To book Digital Marketing Expert, use the Digital Marketing Expert service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Digital Marketing Expert",
+      "book",
+      "booking",
+      "Technical Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_035",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Digital Marketing Expert",
+    "intent": "service_price",
+    "question": "What is the price for Digital Marketing Expert?",
+    "answer": "Check the Digital Marketing Expert pricing information provided in the JustTap application.",
+    "keywords": [
+      "Digital Marketing Expert",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_036",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Online Tutor",
+    "intent": "service_booking",
+    "question": "I want to book Online Tutor.",
+    "answer": "To book Online Tutor, use the Online Tutor service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Online Tutor",
+      "book",
+      "booking",
+      "Education Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_037",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Online Tutor",
+    "intent": "service_price",
+    "question": "What is the price for Online Tutor?",
+    "answer": "Check the Online Tutor pricing information provided in the JustTap application.",
+    "keywords": [
+      "Online Tutor",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_038",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Spoken English Trainer",
+    "intent": "service_booking",
+    "question": "I want to book Spoken English Trainer.",
+    "answer": "To book Spoken English Trainer, use the Spoken English Trainer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Spoken English Trainer",
+      "book",
+      "booking",
+      "Education Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_039",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Spoken English Trainer",
+    "intent": "service_price",
+    "question": "What is the price for Spoken English Trainer?",
+    "answer": "Check the Spoken English Trainer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Spoken English Trainer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_040",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Computer Trainer",
+    "intent": "service_booking",
+    "question": "I want to book Computer Trainer.",
+    "answer": "To book Computer Trainer, use the Computer Trainer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Computer Trainer",
+      "book",
+      "booking",
+      "Education Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_041",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Computer Trainer",
+    "intent": "service_price",
+    "question": "What is the price for Computer Trainer?",
+    "answer": "Check the Computer Trainer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Computer Trainer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_042",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Coaching Institute",
+    "intent": "service_booking",
+    "question": "I want to book Coaching Institute.",
+    "answer": "To book Coaching Institute, use the Coaching Institute service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Coaching Institute",
+      "book",
+      "booking",
+      "Education Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_043",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Coaching Institute",
+    "intent": "service_price",
+    "question": "What is the price for Coaching Institute?",
+    "answer": "Check the Coaching Institute pricing information provided in the JustTap application.",
+    "keywords": [
+      "Coaching Institute",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_044",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Accountant",
+    "intent": "service_booking",
+    "question": "I want to book Accountant.",
+    "answer": "To book Accountant, use the Accountant service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Accountant",
+      "book",
+      "booking",
+      "Business Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_045",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Accountant",
+    "intent": "service_price",
+    "question": "What is the price for Accountant?",
+    "answer": "Check the Accountant pricing information provided in the JustTap application.",
+    "keywords": [
+      "Accountant",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_046",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Tax Consultant",
+    "intent": "service_booking",
+    "question": "I want to book Tax Consultant.",
+    "answer": "To book Tax Consultant, use the Tax Consultant service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Tax Consultant",
+      "book",
+      "booking",
+      "Business Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_047",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Tax Consultant",
+    "intent": "service_price",
+    "question": "What is the price for Tax Consultant?",
+    "answer": "Check the Tax Consultant pricing information provided in the JustTap application.",
+    "keywords": [
+      "Tax Consultant",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_048",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "CA",
+    "intent": "service_booking",
+    "question": "I want to book CA.",
+    "answer": "To book CA, use the CA service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "CA",
+      "book",
+      "booking",
+      "Business Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_049",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "CA",
+    "intent": "service_price",
+    "question": "What is the price for CA?",
+    "answer": "Check the CA pricing information provided in the JustTap application.",
+    "keywords": [
+      "CA",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_050",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Insurance Agent",
+    "intent": "service_booking",
+    "question": "I want to book Insurance Agent.",
+    "answer": "To book Insurance Agent, use the Insurance Agent service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Insurance Agent",
+      "book",
+      "booking",
+      "Business Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_051",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Insurance Agent",
+    "intent": "service_price",
+    "question": "What is the price for Insurance Agent?",
+    "answer": "Check the Insurance Agent pricing information provided in the JustTap application.",
+    "keywords": [
+      "Insurance Agent",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_052",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Financial Advisor",
+    "intent": "service_booking",
+    "question": "I want to book Financial Advisor.",
+    "answer": "To book Financial Advisor, use the Financial Advisor service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Financial Advisor",
+      "book",
+      "booking",
+      "Business Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_053",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_pricing",
+    "sub_service": "Financial Advisor",
+    "intent": "service_price",
+    "question": "What is the price for Financial Advisor?",
+    "answer": "Check the Financial Advisor pricing information provided in the JustTap application.",
+    "keywords": [
+      "Financial Advisor",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  }
+]
