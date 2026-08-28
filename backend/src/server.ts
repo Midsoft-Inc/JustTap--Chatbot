@@ -3,8 +3,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import dns from 'node:dns';
-
 import { env } from './config/env.js';
+
 import { connectMongo } from './db/mongo.js';
 import { ensureCollection } from './services/vector.js';
 import { chatRoutes } from './routes/chat.js';
