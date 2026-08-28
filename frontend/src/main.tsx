@@ -6,11 +6,7 @@ import React, {
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const API = (
-  (import.meta as any).env?.VITE_API_URL ||
-  'http://localhost:8080'
-).replace(/\/$/, '');
-
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 type Lang = 'en' | 'hi';
 
 const LANGS: Record<Lang, { label: string; flag: string }> = {
