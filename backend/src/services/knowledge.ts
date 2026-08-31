@@ -509,16 +509,20 @@ export async function keywordSearch(
     .limit(limit)
     .toArray();
 
-  return docs.map((document, index) => ({
-    ...normalizeRecord(
-      document as unknown as Record<string, unknown>
-    ),
-    score: Math.max(
-      0.5,
-      1 - index / Math.max(limit, 1)
-    ),
-    sourceType: 'keyword' as const
-  }));
+  return docs
+    .map((document) => {
+      const normalized = normalizeRecord(
+        document as unknown as Record<string, unknown>
+      );
+      return {
+        ...normalized,
+        score: scoreRecord(normalized, query),
+        sourceType: 'keyword' as const
+      };
+    })
+    .filter((hit) => hit.score > 0)
+    .sort((a, b) => (b.score - a.score) || a.id.localeCompare(b.id))
+    .slice(0, limit);
 }
 
 /**
@@ -614,7 +618,7 @@ export async function hybridSearch(
   }
 
   return [...map.values()]
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => (b.score - a.score) || a.id.localeCompare(b.id))
     .slice(0, env.TOP_K_FINAL);
 }
 

@@ -2,7 +2,12 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { chat } from '../services/chat.js';
 
-const schema = z.object({ message: z.string().min(1).max(4000), sessionId: z.string().optional(), customerReference: z.string().max(200).optional() });
+const schema = z.object({
+  message: z.string().min(1).max(4000),
+  sessionId: z.string().optional(),
+  customerReference: z.string().max(200).optional(),
+  responseLanguage: z.enum(['en', 'hi', 'mr', 'bn', 'gu', 'pa', 'ta', 'te', 'kn', 'ml']).optional()
+});
 
 export async function chatRoutes(app: FastifyInstance) {
   app.post('/api/v1/chat', async (request, reply) => {

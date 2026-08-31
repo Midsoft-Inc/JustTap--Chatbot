@@ -20,6 +20,7 @@ import { RunnableLambda, RunnableSequence } from '@langchain/core/runnables';
 
 import { hybridSearch } from '../services/knowledge.js';
 import { SearchHit } from '../models/types.js';
+import { env } from '../config/env.js';
 
 type RetrievalInput = {
   query: string;
@@ -35,7 +36,9 @@ function tokenize(text: string): string[] {
 }
 
 const retrieveStep = RunnableLambda.from(async ({ query, entities }: RetrievalInput) => {
+  const t0 = Date.now();
   const hits = await hybridSearch(query);
+  console.log('[TIMING] retrieval.hybridSearch', Date.now() - t0, 'ms');
   return { query, entities, hits };
 });
 
@@ -53,7 +56,14 @@ const rerankStep = RunnableLambda.from(
       return { ...hit, score: Math.min(1, hit.score + lexicalBoost) };
     });
 
-    return rescored.sort((a, b) => b.score - a.score);
+    // Only the top few records are ever useful context for the answer
+    // chain -- sending every candidate instead of the strongest handful
+    // costs latency twice over: the reranker scores more hits, and the
+    // final prompt is longer for both the model to read and answer from.
+    // env.TOP_K_FINAL already exists in config for exactly this purpose.
+    return rescored
+      .sort((a, b) => (b.score - a.score) || a.id.localeCompare(b.id))
+      .slice(0, env.TOP_K_FINAL);
   }
 );
 

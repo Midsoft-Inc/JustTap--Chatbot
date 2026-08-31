@@ -20,6 +20,8 @@ export type ChatRequest = {
   message: string;
   sessionId?: string;
   customerReference?: string;
+  /** Preferred language for the chatbot response. Backward-compatible: if omitted, input language is used. */
+  responseLanguage?: 'en' | 'hi' | 'mr' | 'bn' | 'gu' | 'pa' | 'ta' | 'te' | 'kn' | 'ml';
 };
 
 export type Ticket = {

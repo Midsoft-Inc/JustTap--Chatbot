@@ -14,18 +14,21 @@
 // which still owns the "other connections" (Mongo, ticket creation)
 // exactly as before.
 
-import { RunnableLambda, RunnableSequence } from '@langchain/core/runnables';
+import { RunnableLambda } from '@langchain/core/runnables';
 
 import { detectLanguage } from '../services/language.js';
 import { normalizeQuery } from '../services/translation.js';
 import { runSemanticChain, SemanticResult } from './semanticChain.js';
 import { runRagChain } from './retrieval.js';
 import { getRecentTurns, MemoryTurn } from './memory.js';
+import { getCachedAnswer } from './cache.js';
+import { isContentless, stripEmoji } from './textSignal.js';
 import { SearchHit } from '../models/types.js';
 
 export type OrchestratorInput = {
   sessionId: string;
   message: string;
+  responseLanguage?: string;
 };
 
 export type OrchestratorStage = 'small_talk' | 'clarification' | 'support_issue' | 'grounded';
@@ -35,9 +38,11 @@ export type OrchestratorResult = {
   normalizedMessage: string;
   semantic: SemanticResult;
   stage: OrchestratorStage;
-  answer?: string; // pre-built reply for small_talk / clarification stages
+  answer?: string; // pre-built reply for small_talk / clarification stages,
+                    // and for a cache-hit grounded answer (see cache.ts)
   hits?: SearchHit[]; // populated for the grounded stage
   topScore?: number; // populated for the grounded stage
+  timings?: Record<string, number>; // per-stage ms, for latency observability
 };
 
 const SMALL_TALK_INTENTS = new Set(['greeting', 'thanks', 'goodbye', 'acknowledgement']);
@@ -79,16 +84,28 @@ function smallTalkReply(intent: string, language: string): string {
 }
 
 // Step 1 + 2: Language Detection -> Normalization (+ pull conversation memory)
+//
+// Emoji are stripped before language detection/translation so stray
+// characters can't interfere with the regex/script-based detector or
+// sit unexplained inside the translation prompt. normalizeQuery() (a
+// translation LLM call, when the input isn't already English) and the
+// conversation-memory fetch are independent of each other, so they run
+// concurrently instead of one after another -- a real latency win, not
+// just a cosmetic one.
 const languageStep = RunnableLambda.from(async (input: OrchestratorInput) => {
-  const language = detectLanguage(input.message);
-  const normalizedMessage = await normalizeQuery(input.message, language);
-  const history = await getRecentTurns(input.sessionId);
-  return { ...input, language, normalizedMessage, history };
+  const cleanedMessage = stripEmoji(input.message) || input.message;
+  const inputLanguage = detectLanguage(cleanedMessage);
+  const responseLanguage = input.responseLanguage || inputLanguage || 'en';
+  const [normalizedMessage, history] = await Promise.all([
+    normalizeQuery(cleanedMessage, inputLanguage),
+    getRecentTurns(input.sessionId)
+  ]);
+  return { ...input, language: inputLanguage, responseLanguage, normalizedMessage, history };
 });
 
 // Step 3: Semantic LLM Chain -> Intent / Service / Entities -> Conversation State
 const semanticStep = RunnableLambda.from(
-  async (state: OrchestratorInput & { language: string; normalizedMessage: string; history: MemoryTurn[] }) => {
+  async (state: OrchestratorInput & { language: string; responseLanguage: string; normalizedMessage: string; history: MemoryTurn[] }) => {
     const semantic = await runSemanticChain({
       message: state.message,
       normalizedMessage: state.normalizedMessage,
@@ -104,34 +121,35 @@ const routeStep = RunnableLambda.from(
   async (
     state: OrchestratorInput & {
       language: string;
+      responseLanguage: string;
       normalizedMessage: string;
       history: MemoryTurn[];
       semantic: SemanticResult;
     }
   ): Promise<OrchestratorResult> => {
-    const { semantic, language, normalizedMessage } = state;
+    const { semantic, language, responseLanguage, normalizedMessage } = state;
 
     if (SMALL_TALK_INTENTS.has(semantic.intent)) {
       return {
-        language,
+        language: responseLanguage,
         normalizedMessage,
         semantic,
         stage: 'small_talk',
-        answer: smallTalkReply(semantic.intent, language)
+        answer: smallTalkReply(semantic.intent, responseLanguage)
       };
     }
 
     if (semantic.supportIssue) {
-      return { language, normalizedMessage, semantic, stage: 'support_issue' };
+      return { language: responseLanguage, normalizedMessage, semantic, stage: 'support_issue' };
     }
 
     if (semantic.conversationState === 'needs_clarification') {
       return {
-        language,
+        language: responseLanguage,
         normalizedMessage,
         semantic,
         stage: 'clarification',
-        answer: CLARIFICATION_REPLIES[language] ?? CLARIFICATION_REPLIES.en
+        answer: CLARIFICATION_REPLIES[responseLanguage] ?? CLARIFICATION_REPLIES.en
       };
     }
 
@@ -146,12 +164,80 @@ const routeStep = RunnableLambda.from(
     const hits = await runRagChain({ query: retrievalQuery, entities: semantic.entities });
     const topScore = hits[0]?.score ?? 0;
 
-    return { language, normalizedMessage, semantic, stage: 'grounded', hits, topScore };
+    return { language: responseLanguage, normalizedMessage, semantic, stage: 'grounded', hits, topScore };
   }
 );
 
-export const orchestrator = RunnableSequence.from([languageStep, semanticStep, routeStep]);
+const EMPTY_SEMANTIC = (intent: string): SemanticResult => ({
+  intent,
+  category: 'general',
+  service: null,
+  entities: {},
+  confidence: 1,
+  conversationState: 'complete',
+  supportIssue: false
+});
 
 export async function runOrchestrator(input: OrchestratorInput): Promise<OrchestratorResult> {
-  return orchestrator.invoke(input);
+  // Fast path 1: emoji-only / punctuation-only messages ("🙏", "👍", "!!").
+  // There is no question here to ground an answer in, so this never
+  // reaches the semantic chain or the LLM at all -- it goes straight to
+  // a safe acknowledgement. This is both a latency win (skips language
+  // detection's translation call, the semantic chain, retrieval, and
+  // generation entirely) and a hallucination fix: an emoji-only message
+  // is exactly the kind of "no real content" input a generic-guidance
+  // prompt would otherwise improvise an answer for.
+  if (isContentless(input.message)) {
+    const t0 = Date.now();
+    const language = input.responseLanguage || detectLanguage(input.message) || 'en';
+    return {
+      language,
+      normalizedMessage: '',
+      semantic: EMPTY_SEMANTIC('acknowledgement'),
+      stage: 'small_talk',
+      answer: smallTalkReply('acknowledgement', language),
+      timings: { contentlessCheck: Date.now() - t0 }
+    };
+  }
+
+  const tLanguage = Date.now();
+  const afterLanguage = await languageStep.invoke(input);
+  const languageMs = Date.now() - tLanguage;
+
+  // Fast path 2: an exact repeat of a previously-answered grounded
+  // question. Skips the semantic chain, retrieval, reranker, and
+  // generation entirely -- the biggest single latency win available for
+  // high-traffic repeated questions ("how to login justtap", "how to
+  // book a plumber"). Only grounded-stage answers are ever cached (see
+  // cache.ts), so this can never return a stale ticket ID or a
+  // conversation-state-dependent clarification.
+  const tCache = Date.now();
+  const cached = await getCachedAnswer(afterLanguage.normalizedMessage, afterLanguage.responseLanguage);
+  const cacheMs = Date.now() - tCache;
+
+  if (cached) {
+    return {
+      language: afterLanguage.responseLanguage,
+      normalizedMessage: afterLanguage.normalizedMessage,
+      semantic: EMPTY_SEMANTIC(cached.intent),
+      stage: 'grounded',
+      answer: cached.answer,
+      hits: [],
+      topScore: 1,
+      timings: { language: languageMs, cacheLookup: cacheMs }
+    };
+  }
+
+  const tSemantic = Date.now();
+  const afterSemantic = await semanticStep.invoke(afterLanguage);
+  const semanticMs = Date.now() - tSemantic;
+
+  const tRoute = Date.now();
+  const result = await routeStep.invoke(afterSemantic);
+  const routeMs = Date.now() - tRoute;
+
+  return {
+    ...result,
+    timings: { language: languageMs, cacheLookup: cacheMs, semantic: semanticMs, route: routeMs }
+  };
 }

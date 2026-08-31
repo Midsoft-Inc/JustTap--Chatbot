@@ -40,7 +40,8 @@ export async function embed(text: string): Promise<number[]> {
 
 export async function generate(
   prompt: string,
-  language: string = 'en'
+  language: string = 'en',
+  maxTokens: number = 250
 ): Promise<string> {
   const normalizedLanguage = language.trim().toLowerCase() || 'en';
 
@@ -89,8 +90,8 @@ STRICT RULES:
       { role: 'system', content: systemPrompt },
       { role: 'user', content: prompt }
     ],
-    max_tokens: 250,
-    temperature: 0.1
+    max_tokens: maxTokens,
+    temperature: 0
   });
 
   const content = response.choices?.[0]?.message?.content;
