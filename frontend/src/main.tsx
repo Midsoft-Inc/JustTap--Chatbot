@@ -35,7 +35,6 @@ const T: Record<Lang, any> = {
     online: 'Online',
     saveChat: 'Save Chat',
     thinking: 'Genie is typing…',
-    helpful: 'Was this helpful?',
     backToLatest: 'Back to latest',
     notSupported: 'Voice input is not supported in this browser.',
     listening: "I'm listening...",
@@ -43,9 +42,6 @@ const T: Record<Lang, any> = {
     voiceFailed: 'Voice input failed. Please try again.',
     connectError: 'Support is temporarily unavailable. Please try again.',
     thankYou: 'Thank you. Your request has been received and our team will contact you.',
-    secureFooter: '🔒 Secure • Reliable • JustTap',
-    emojiTitle: 'Emoji',
-    gifTitle: 'GIF'
   },
   hi: {
     type: 'अपना सवाल लिखें...',
@@ -67,7 +63,6 @@ const T: Record<Lang, any> = {
     online: 'ऑनलाइन',
     saveChat: 'चैट सेव करें',
     thinking: 'Genie टाइप कर रहा है…',
-    helpful: 'क्या इससे मदद मिली?',
     backToLatest: 'नया संदेश देखें',
     notSupported: 'इस ब्राउज़र में वॉइस इनपुट समर्थित नहीं है।',
     listening: 'मैं सुन रहा हूँ...',
@@ -75,26 +70,9 @@ const T: Record<Lang, any> = {
     voiceFailed: 'वॉइस इनपुट विफल रहा। कृपया फिर से प्रयास करें।',
     connectError: 'मैं अभी सहायता सेवा से कनेक्ट नहीं कर पा रहा हूँ। कृपया कुछ देर बाद प्रयास करें।',
     thankYou: 'धन्यवाद। आपका अनुरोध प्राप्त हो गया है और हमारी टीम आपसे संपर्क करेगी।',
-    secureFooter: '🔒 सुरक्षित • विश्वसनीय • JustTap',
-    emojiTitle: 'इमोजी',
-    gifTitle: 'GIF'
   }
 };
 
-const EMOJIS = [
-  '😀', '😂', '😍', '👍', '🙏', '🎉',
-  '❤️', '😊', '👏', '🤔', '😢', '🔥',
-  '✅', '👋', '😉', '🙌', '💯', '😅'
-];
-
-const STICKERS: Array<{ emoji: string; label: string }> = [
-  { emoji: '👍', label: 'Thumbs up' },
-  { emoji: '🎉', label: 'Celebrate' },
-  { emoji: '🙏', label: 'Thank you' },
-  { emoji: '😂', label: 'Haha' },
-  { emoji: '❤️', label: 'Love it' },
-  { emoji: '👏', label: 'Nice work' }
-];
 
 function nowTime(): string {
   return new Date().toLocaleTimeString([], {
@@ -351,12 +329,6 @@ function ChatbotPanel({
   const [feedback, setFeedback] =
     useState<Record<number, 'up' | 'down'>>({});
 
-  const [emojiOpen, setEmojiOpen] =
-    useState(false);
-
-  const [gifOpen, setGifOpen] =
-    useState(false);
-
   const t = T[lang];
 
   useEffect(() => {
@@ -390,8 +362,6 @@ function ChatbotPanel({
     setIsThinking(false);
     setStreamingId(null);
     setFeedback({});
-    setEmojiOpen(false);
-    setGifOpen(false);
   }, [lang]);
 
   // Resume support: keep the conversation saved so closing and
@@ -449,8 +419,6 @@ function ChatbotPanel({
     setIsThinking(false);
     setStreamingId(null);
     setFeedback({});
-    setEmojiOpen(false);
-    setGifOpen(false);
   };
 
   const saveChatToFile = () => {
@@ -530,8 +498,6 @@ function ChatbotPanel({
     if (!q) return;
 
     setInput('');
-    setEmojiOpen(false);
-    setGifOpen(false);
 
     // Sending a message means the customer wants to see it (and the
     // reply that follows) right away — jump to the latest message even
@@ -584,6 +550,7 @@ function ChatbotPanel({
               sessionId,
               message: q,
               language: lang,
+              responseLanguage: lang,
               audience: 'customer'
             })
           }
@@ -758,11 +725,6 @@ function ChatbotPanel({
     return -1;
   })();
 
-  const showHelpful =
-    lastBotIndex > 0 &&
-    streamingId === null &&
-    !isThinking;
-
   return (
     <div className="customer-panel">
       <header className="genie-header">
@@ -917,9 +879,42 @@ function ChatbotPanel({
                       {message.role === 'user' && (
                         <Icon name="check" size={12} />
                       )}
+                      {message.role === 'bot' &&
+                        message.id !== streamingId && (
+                          <>
+                            <button
+                              type="button"
+                              className={`feedback-icon ${feedback[index] === 'up' ? 'active' : ''}`}
+                              aria-label="Helpful"
+                              onClick={() =>
+                                setFeedback(current => ({
+                                  ...current,
+                                  [index]: 'up'
+                                }))
+                              }
+                            >
+                              👍
+                            </button>
+                            <button
+                              type="button"
+                              className={`feedback-icon ${feedback[index] === 'down' ? 'active' : ''}`}
+                              aria-label="Not helpful"
+                              onClick={() =>
+                                setFeedback(current => ({
+                                  ...current,
+                                  [index]: 'down'
+                                }))
+                              }
+                            >
+                              👎
+                            </button>
+                          </>
+                        )}
                     </div>
                   )}
+
                 </div>
+
               </div>
             )
           )}
@@ -964,48 +959,6 @@ function ChatbotPanel({
             </div>
           )}
 
-          {showHelpful && (
-            <div className="helpful-row">
-              <span>{t.helpful}</span>
-
-              <button
-                type="button"
-                className={
-                  feedback[lastBotIndex] === 'up'
-                    ? 'active'
-                    : ''
-                }
-                aria-label="Helpful"
-                onClick={() =>
-                  setFeedback(current => ({
-                    ...current,
-                    [lastBotIndex]: 'up'
-                  }))
-                }
-              >
-                <Icon name="thumbUp" size={16} />
-              </button>
-
-              <button
-                type="button"
-                className={
-                  feedback[lastBotIndex] === 'down'
-                    ? 'active'
-                    : ''
-                }
-                aria-label="Not helpful"
-                onClick={() =>
-                  setFeedback(current => ({
-                    ...current,
-                    [lastBotIndex]: 'down'
-                  }))
-                }
-              >
-                <Icon name="thumbDown" size={16} />
-              </button>
-            </div>
-          )}
-
           <div ref={bottomRef} />
         </div>
 
@@ -1031,44 +984,6 @@ function ChatbotPanel({
           </div>
         )}
 
-        {emojiOpen && (
-          <div className="picker-panel emoji-panel">
-            {EMOJIS.map(emoji => (
-              <button
-                type="button"
-                key={emoji}
-                onClick={() => {
-                  setInput(
-                    current => current + emoji
-                  );
-                }}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {gifOpen && (
-          <div className="picker-panel gif-panel">
-            {STICKERS.map(sticker => (
-              <button
-                type="button"
-                key={sticker.emoji}
-                onClick={() => {
-                  setGifOpen(false);
-                  void ask(sticker.emoji);
-                }}
-              >
-                <span className="sticker-emoji">
-                  {sticker.emoji}
-                </span>
-                <small>{sticker.label}</small>
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="composer">
           <input
             value={input}
@@ -1077,10 +992,6 @@ function ChatbotPanel({
                 event.target.value
               )
             }
-            onFocus={() => {
-              setEmojiOpen(false);
-              setGifOpen(false);
-            }}
             onKeyDown={event => {
               if (
                 event.key === 'Enter'
@@ -1118,44 +1029,6 @@ function ChatbotPanel({
           >
             <Icon name="send" size={18} />
           </button>
-        </div>
-
-        <div className="composer-tools">
-          <button
-            type="button"
-            className={
-              `icon-btn ${emojiOpen ? 'active' : ''}`
-            }
-            title={t.emojiTitle}
-            aria-label={t.emojiTitle}
-            onClick={() => {
-              setGifOpen(false);
-              setEmojiOpen(open => !open);
-            }}
-          >
-            <Icon name="smiley" size={14} />
-            <span>{t.emojiTitle}</span>
-          </button>
-
-          <button
-            type="button"
-            className={
-              `icon-btn ${gifOpen ? 'active' : ''}`
-            }
-            title={t.gifTitle}
-            aria-label={t.gifTitle}
-            onClick={() => {
-              setEmojiOpen(false);
-              setGifOpen(open => !open);
-            }}
-          >
-            <Icon name="gif" size={14} />
-            <span>{t.gifTitle}</span>
-          </button>
-        </div>
-
-        <div className="secure-footer">
-          {t.secureFooter}
         </div>
       </div>
 
