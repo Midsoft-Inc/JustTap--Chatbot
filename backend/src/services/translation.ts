@@ -19,73 +19,121 @@ const languageNames: Record<string, string> = {
 };
 
 /**
- * Small deterministic normalization layer for common Roman Hindi/Marathi
- * customer-support phrases. The LLM remains the general multilingual
- * translation layer.
+ * Deterministic multilingual normalization for common JustTap intents.
+ *
+ * This layer is intentionally small and business-focused. It converts
+ * common Hindi/Marathi native-script and Roman-script requests into the
+ * canonical English form used by the existing intent/RAG pipeline.
+ *
+ * The detected language is NOT changed here. Only the query representation
+ * is normalized, so the existing answer layer can still respond in Hindi
+ * or Marathi.
  */
 function deterministicNormalize(text: string): string | null {
   const value = text
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, ' ');
+    .replace(/[।!?]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
+  if (!value) return null;
+
+  // ---------------------------------------------------------
+  // Service detection
+  // ---------------------------------------------------------
+  const plumber =
+    /\bplumber\b|\bplumbing\b|\bpipe\b|\btap\b|\bfaucet\b|\bsink\b|\btoilet\b|\bdrain\b|water\s*leak|\bनल\b|\bनळ\b|\bपाइप\b|\bप्लंबर\b|\bप्लम्बिंग\b|\bनलसाजी\b|\bटॅप\b|\bपाणी\s*गळती\b|\bनळाची\b/iu.test(value);
+
+  const electrician =
+    /\belectrician\b|\belectrical\b|\bwiring\b|\bswitch\b|\bsocket\b|\blight\b|\bfan\b|\bइलेक्ट्रीशियन\b|\bइलेक्ट्रिशियन\b|\bइलेक्ट्रिकल\b|\bवायरिंग\b|\bवीज\b|\bइलेक्ट्रिशियन\b/iu.test(value);
+
+  const carpenter =
+    /\bcarpenter\b|\bcarpentry\b|\bwood\b|\bfurniture\b|\bdoor\b|\bwardrobe\b|\bकारपेंटर\b|\bसुतार\b|\bलाकूड\b|\bफर्निचर\b|\bदरवाजा\b|\bदरवाजे\b/iu.test(value);
+
+  const service =
+    /\bservice\b|\bseva\b|\bservices\b|\bसेवा\b|\bसेवाएं\b|\bसेवाएँ\b|\bसेवा\b/iu.test(value);
+
+  const serviceName = plumber
+    ? 'plumber'
+    : electrician
+      ? 'electrician'
+      : carpenter
+        ? 'carpenter'
+        : null;
+
+  // ---------------------------------------------------------
+  // Booking
+  // ---------------------------------------------------------
+  const bookingRequested =
+    /\bbook\b|\bbooking\b|\bbuk\b|\bschedule\b|\bबुक\b|\bबुकिंग\b|\bबुक\s*कर\b|\bबुक\s*करना\b|\bबुक\s*करनी\b|\bबुक\s*कराय\b|\bबुक\s*करायची\b|\bबुकिंग\s*करायची\b|\bसेवा\s*बुक\b|\bसेवा\s*बुकिंग\b/iu.test(value);
+
+  if (bookingRequested && serviceName) {
+    return `I want to book ${serviceName}`;
+  }
+
+  if (bookingRequested && service) {
+    return 'I want to book a service';
+  }
+
+  // ---------------------------------------------------------
+  // Price
+  // ---------------------------------------------------------
+  const priceRequested =
+    /\bprice\b|\bcost\b|\bcharge\b|\brate\b|\bkimat\b|\bkimmat\b|\bkitna\b|\bkitni\b|\bpaisa\b|\bpaise\b|\bकिंमत\b|\bकिती\b|\bकितना\b|\bकितनी\b|\bकिंमत\b|\bदर\b|\bपैसे\b|\bकीमत\b/iu.test(value);
+
+  if (priceRequested && serviceName) {
+    return `What is the price for ${serviceName}?`;
+  }
+
+  if (priceRequested && service) {
+    return 'What is the price for the service?';
+  }
+
+  // ---------------------------------------------------------
   // Payment problems
+  // ---------------------------------------------------------
   if (
-    /(?:mera|meri|mere)\s+(?:payment|पेमेंट|bhugtan)\s+(?:ruk|rukh|atak|atka|atki|pending|stuck)\s+(?:gaya|gayi|hai|hain)?/i.test(value) ||
-    /(?:payment|पेमेंट)\s+(?:ruk|rukh|atak|atka|atki|pending|stuck)\s+(?:gaya|gayi|hai|hain)?/i.test(value)
+    /(?:mera|meri|mere)\s+(?:payment|पेमेंट|bhugtan).*(?:ruk|rukh|atak|atka|atki|pending|stuck|fail|failed|nahi hua|nahi hui)/iu.test(value) ||
+    /(?:payment|पेमेंट|भुगतान).*(?:ruk|atak|pending|stuck|fail|failed|नहीं हुआ|नहीं हुई|अटक)/iu.test(value)
   ) {
+    if (/(?:fail|failed|failure|nahi hua|nahi hui|नहीं हुआ|नहीं हुई|फेल)/iu.test(value)) {
+      return 'My payment failed';
+    }
     return 'My payment is stuck';
   }
 
   if (
-    /(?:mera|meri|mere)\s+(?:payment|पेमेंट).*(?:fail|failed|failure|nahi hua|nahi hui)/i.test(value)
-  ) {
-    return 'My payment failed';
-  }
-
-  if (
-    /(?:mere|meri|mera)\s+(?:paise|paisa|amount|rakam).*(?:kat|kate|cut|deduct)/i.test(value)
+    /(?:mere|meri|mera)\s+(?:paise|paisa|amount|rakam).*(?:kat|kate|cut|deduct)/iu.test(value) ||
+    /(?:पैसे|रक्कम|रकम|amount).*(?:कट|काट|deduct|कटले|कापले)/iu.test(value)
   ) {
     return 'Money was deducted from my account';
   }
 
   if (
-    /(?:payment|पेमेंट).*(?:problem|issue|error|dikkat|pareshani|samasy)/i.test(value)
+    /(?:payment|पेमेंट|भुगतान).*(?:problem|issue|error|dikkat|pareshani|samasy|समस्या|अडचण|त्रुटी)/iu.test(value)
   ) {
     return 'I have a payment problem';
   }
 
-  // Booking
-  if (
-    /(?:mujhe|main|mai|me)\s+(?:ek\s+)?(?:service|seva).*(?:book|booking|buk)/i.test(value) ||
-    /(?:mujhe|main|mai|me).*?(?:book|booking|buk).*?(?:service|seva)/i.test(value)
-  ) {
-    return 'I want to book a service';
-  }
-
-  if (/(?:service|seva).*(?:book|booking|buk)/i.test(value)) {
-    return 'I want to book a service';
-  }
-
-  // Price
-  if (
-    /(?:kitna|kitni|kya).*(?:price|cost|charge|rate|paisa|paise|kimat|kimmat)/i.test(value) ||
-    /(?:price|cost|charge|rate|kimat|kimmat).*(?:service|seva)/i.test(value)
-  ) {
-    return 'What is the price of the service?';
-  }
-
+  // ---------------------------------------------------------
   // Provider
+  // ---------------------------------------------------------
   if (
-    /(?:provider|service provider).*(?:near|nearby|mere paas|aas paas)/i.test(value)
+    /(?:provider|service provider).*(?:near|nearby|mere paas|aas paas)/iu.test(value) ||
+    /(?:प्रोवाइडर|सेवा प्रदाता).*(?:पास|जवळ|जवळपास)/iu.test(value)
   ) {
     return 'How can I find a service provider near me?';
   }
 
-  // JustTap
+  // ---------------------------------------------------------
+  // JustTap overview / identity
+  // ---------------------------------------------------------
   if (
-    /(?:what|kya).*(?:justtap).*(?:do|hai|he|works|kaam)/i.test(value) ||
-    /justtap.*(?:kya hai|kya karta|kaise kaam)/i.test(value)
+    /(?:what|kya).*(?:justtap).*(?:do|hai|he|works|kaam)/iu.test(value) ||
+    /justtap.*(?:kya hai|kya karta|kaise kaam)/iu.test(value) ||
+    /justtap.*(?:क्या है|क्या करता|कैसे काम)/iu.test(value) ||
+    /justtap.*(?:काय आहे|काय करते|कसे काम करते)/iu.test(value)
   ) {
     return 'What is JustTap?';
   }
@@ -114,9 +162,8 @@ export async function normalizeQuery(
     return input;
   }
 
-  // Fast deterministic handling for common Roman Hindi/Marathi support
-  // phrases. This prevents critical intents from depending on an LLM
-  // interpreting a short Roman-script message correctly.
+  // Always try deterministic normalization first. This works even when
+  // Hugging Face inference is unavailable or credits are exhausted.
   const deterministic = deterministicNormalize(input);
 
   if (deterministic) {
@@ -141,9 +188,11 @@ Rules:
 - Do not add or remove information.
 - Preserve service names and important entities.
 - Preserve booking, payment, provider, pricing, cancellation,
-  and support meaning.
+  rescheduling, and support meaning.
 - Understand Indian languages written in native scripts.
 - Understand Indian languages written using English/Roman letters.
+- If the user asks to book a named service, keep the exact service name
+  in English (for example: plumber, electrician, carpenter).
 - Return ONLY the normalized English query.
 - Do not explain the translation.
 - Do not return JSON.
@@ -173,20 +222,30 @@ ${input}
       temperature: 0
     });
 
-    const content =
-      response.choices?.[0]?.message?.content;
+    const content = response.choices?.[0]?.message?.content;
 
     if (content && typeof content === 'string' && content.trim()) {
       const result = content
         .trim()
-        .replace(/^["']|["']$/g, '')
+        .replace(/^['"]|['"]$/g, '')
         .replace(/\s+/g, ' ');
 
-      console.log(
-        `[TRANSLATION] llm: "${input}" -> "${result}"`
-      );
+      // Do not pass an untranslated native-script response into the English
+      // intent/RAG pipeline. If the model returned native script, fall back
+      // instead of silently poisoning downstream retrieval.
+      const containsNativeIndianScript =
+        /[\u0900-\u097F\u0980-\u09FF\u0A80-\u0AFF\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/u.test(result);
 
-      return result;
+      if (!containsNativeIndianScript) {
+        console.log(
+          `[TRANSLATION] llm: "${input}" -> "${result}"`
+        );
+        return result;
+      }
+
+      console.warn(
+        '[TRANSLATION] LLM returned non-English/native-script output; using deterministic fallback.'
+      );
     }
   } catch (error) {
     console.error(
@@ -195,6 +254,8 @@ ${input}
     );
   }
 
-  // Safe fallback: preserve the original query instead of crashing.
+  // Never crash the request. For unsupported phrases, preserving the input
+  // is safer than inventing meaning. Known Hindi/Marathi critical phrases
+  // have already been handled deterministically above.
   return input;
 }

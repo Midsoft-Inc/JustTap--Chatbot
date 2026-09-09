@@ -95,10 +95,9 @@
 .thinking-bubble .dot:nth-child(3){animation-delay:.3s}
 @keyframes thinkBounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 
-/* ---- Was this helpful ---- */
-.helpful-row{display:flex;align-items:center;gap:10px;padding:6px 4px 2px;font-size:13px;font-weight:800}
-.helpful-row button{border:1px solid var(--line);background:#fff;border-radius:9px;width:32px;height:32px;display:grid;place-items:center;color:var(--muted);cursor:pointer}
-.helpful-row button.active{background:#eaf7ef;border-color:#bfe6cd;color:var(--green)}
+/* ---- Simple RLHF feedback beside message time ---- */
+.feedback-icon{border:0;background:transparent;padding:0;margin-left:2px;line-height:1;font-size:13px;cursor:pointer;opacity:.7}
+.feedback-icon:hover,.feedback-icon.active{opacity:1;transform:scale(1.05)}
 
 /* ---- Composer ---- */
 .composer-wrap{background:linear-gradient(145deg,#004b33,#007052);padding:10px 10px 8px}

@@ -47,6 +47,7 @@ const ALLOWED_INTENTS = new Set([
   'service_need',
   'service_price',
   'service_provider',
+  'service_overview',
   'payment_problem',
   'how_to_book',
   'knowledge',
@@ -119,6 +120,25 @@ const semanticStep = RunnableLambda.from(
     // model JSON/parsing variability. The canonical service is still read
     // from the actual JustTap knowledge catalogue -- it is not invented.
     const s = input.normalizedMessage.trim();
+
+    // Fast path for login/account-access questions. These are deterministic
+    // knowledge requests, so don't spend an LLM call on intent classification.
+    if (
+      /\\b(?:login|log[ -]?in|sign[ -]?in|signin)\\b/i.test(s) &&
+      /(?:\\b(?:how|can|do|access|help)\\b|kaise|kese|kare|karo|karu|karna|कर|लॉगिन|लॉग इन|साइन इन)/iu.test(s)
+    ) {
+      return {
+        input,
+        rule,
+        understood: {
+          intent: 'knowledge',
+          service: null,
+          entities: { topic: 'login', action: 'login to JustTap' },
+          confidence: 0.99,
+          conversationState: 'complete'
+        } as LlmUnderstanding
+      };
+    }
 
     let catalog: Array<{ service: string; keywords: string[] }> = [];
     let discovered: string | null = null;
@@ -201,7 +221,7 @@ const semanticStep = RunnableLambda.from(
 
     const prompt = `Convert this JustTap customer message into JSON only:
 
-{"intent":"service_booking | service_need | service_price | service_provider | payment_problem | how_to_book | knowledge | unknown_query","service":"canonical service name from the dataset or null","entities":{},"confidence":0.0,"conversationState":"complete | needs_clarification"}
+{"intent":"service_booking | service_need | service_price | service_provider | service_overview | payment_problem | how_to_book | knowledge | unknown_query","service":"canonical service name from the dataset or null","entities":{},"confidence":0.0,"conversationState":"complete | needs_clarification"}
 
 Understand meaning, not exact wording. Use the recent conversation below to
 resolve references such as "I need a technician" following an earlier

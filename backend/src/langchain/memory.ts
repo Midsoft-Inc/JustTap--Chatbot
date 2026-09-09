@@ -54,6 +54,28 @@ export async function getRecentTurns(sessionId: string): Promise<MemoryTurn[]> {
   }
 }
 
+
+export async function getConversationLanguage(sessionId: string): Promise<string | null> {
+  if (!sessionId) return null;
+
+  if (env.CHATBOT_MODE === 'mock') {
+    return null;
+  }
+
+  try {
+    const doc = await mongoDb().collection('conversations').findOne(
+      { sessionId },
+      { projection: { responseLanguage: 1 } }
+    );
+    const language = typeof doc?.responseLanguage === 'string'
+      ? doc.responseLanguage.trim().toLowerCase()
+      : '';
+    return language || null;
+  } catch {
+    return null;
+  }
+}
+
 export function rememberMockTurn(sessionId: string, turn: MemoryTurn) {
   if (env.CHATBOT_MODE !== 'mock' || !sessionId) return;
   const list = mockMemory.get(sessionId) ?? [];

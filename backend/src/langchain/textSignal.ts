@@ -31,6 +31,27 @@ export function stripEmoji(text: string): string {
 
 // True for messages that, once emoji and punctuation are removed, carry
 // no actual words -- e.g. "🙏", "😀😀", "!!", "👍🏽".
+export function normalizeDomainQuery(text: string): string {
+  let value = stripEmoji(text);
+
+  // Normalize common Hindi/Hinglish service phrases to stable English
+  // retrieval terms without changing the user's requested response language.
+  const replacements: Array<[RegExp, string]> = [
+    [/\blogin\s+(?:kaise|kese|kais[ae])\s+(?:karu|kare|karen|kr\s*\w*)\b/gi, 'how to login'],
+    [/\blogin\s+(?:kaise|kese|kais[ae])\b/gi, 'how to login'],
+    [/\bsign\s*in\s+(?:kaise|kare|karu|karen)\b/gi, 'how to sign in'],
+    [/\blogin\s+karna\s+hai\b/gi, 'need to login'],
+    [/\blogin\s+karna\b/gi, 'login'],
+    [/\bkaise\s+login\s+(?:karu|kare|karen)\b/gi, 'how to login'],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    value = value.replace(pattern, replacement);
+  }
+
+  return value.replace(/\s+/g, ' ').trim();
+}
+
 export function isContentless(text: string): boolean {
   const withoutEmoji = stripEmoji(text);
   const withoutPunctuation = withoutEmoji.replace(/[^\p{L}\p{N}]+/gu, '');

@@ -263,178 +263,57 @@ function tokenize(text: string): string[] {
  * Multilingual aliases are used so Hindi/Marathi
  * queries can match the English knowledge dataset.
  */
-function scoreRecord(
-  record: KnowledgeRecord,
-  query: string
-): number {
-  const queryLower = query.toLowerCase();
+function scoreRecord(record: KnowledgeRecord, query: string): number {
+  const q = query.toLowerCase().trim();
+  const tokens = tokenize(q);
+  const expanded = expandQuery(q);
+  const searchable = [
+    record.question, record.answer, record.category,
+    record.sub_service ?? '', record.intent, ...record.keywords
+  ].join(' ').toLowerCase();
 
-  const queryTokens = tokenize(query);
-
-  const expandedTerms = expandQuery(query);
-
-  // Canonical service terms are stronger evidence than generic words such
-  // as "service", "book", or "need". This is important for queries such as
-  // "I need someone to fix my tap" -> plumbing.
-  const canonicalService: 
-  | 'plumber'
-  | 'electrician'
-  | 'carpenter'
-  | 'bike servicing'
-  | null =
-  /(?:\bplumbing\b|\bplumber\b|tap|faucet|sink|pipe|water\s+leak|leaking\s+pipe|toilet|drain|नल|पाइप)/iu.test(query)
-    ? 'plumber'
-    : /(?:\belectrical\b|\belectrician\b|wiring|switch|socket|power\s+outlet|इलेक्ट्रीशियन|इलेक्ट्रिशियन|बिजली|वीज)/iu.test(query)
-      ? 'electrician'
-      : /(?:\bcarpentry\b|\bcarpenter\b|door|furniture|cabinet|woodwork)/iu.test(query)
-        ? 'carpenter'
-        : /(?:\bbike\b|\bbick\b|bicycle|bike\s*(?:repair|service|servicing)|motorbike|motorcycle|scooter|mechanic)/iu.test(query)
-          ? 'bike servicing'
-          : null;
-
-  const searchableText = [
-    record.question,
-    record.answer,
-    record.category,
-    record.sub_service ?? '',
-    record.intent,
-    ...record.keywords
-  ]
-    .join(' ')
-    .toLowerCase();
+  const question = record.question.toLowerCase().trim();
+  if (question && q === question) return 1;
+  if (question.length >= 8 && (question.includes(q) || q.includes(question))) return 0.98;
 
   let score = 0;
+  const direct = tokens.filter(t => searchable.includes(t)).length;
+  if (tokens.length) score += (direct / tokens.length) * 0.40;
 
-  // ---------------------------------------------------------
-  // Direct token matches
-  // ---------------------------------------------------------
+  for (const canonical of Object.keys(multilingualAliases)) {
+    if (expanded.includes(canonical) && searchable.includes(canonical)) score += 0.20;
+  }
 
-  const directMatches = queryTokens.filter((token) =>
-    searchableText.includes(token)
+  const service =
+    /(?:\bplumb(?:er|ing)\b|tap|faucet|sink|pipe|water\s+leak|leaking\s+pipe|toilet|drain|नल|नळ|पाइप|प्लंबर|प्लम्बिंग|नलसाजी)/iu.test(q) ? 'plumber' :
+    /(?:\belectric(?:ian|al)?\b|wiring|switch|socket|power\s+outlet|इलेक्ट्रीशियन|इलेक्ट्रिशियन|बिजली|वीज)/iu.test(q) ? 'electrician' :
+    /(?:\bcarpent(?:er|ry)\b|door|furniture|cabinet|woodwork|सुतार|सुतारकाम)/iu.test(q) ? 'carpenter' :
+    /(?:\bbike\b|bicycle|motorbike|motorcycle|scooter|mechanic)/iu.test(q) ? 'bike servicing' : null;
+
+  if (service) {
+    const st = [record.sub_service ?? '', record.category, ...record.keywords,
+      record.question, record.answer].join(' ').toLowerCase();
+    const rx = service === 'plumber' ? /plumb|tap|faucet|sink|pipe|toilet|drain|नल|नळ|पाइप|प्लंबर|प्लम्बिंग|नलसाजी/u :
+      service === 'electrician' ? /electrical|electrician|wiring|switch|socket|power|इलेक्ट्रीशियन|इलेक्ट्रिशियन|बिजली|वीज/u :
+      service === 'carpenter' ? /carpent|door|furniture|cabinet|woodwork|सुतार/u :
+      /bike\s*servic|bicycle|motorbike|motorcycle|scooter|mechanic/u;
+    if (rx.test(st)) score += 0.30;
+  }
+
+  if (expanded.includes('book') && record.intent === 'how_to_book') score += 0.30;
+  if (expanded.includes('cancel') && record.intent === 'cancel_booking') score += 0.30;
+  if (expanded.includes('reschedule') && record.intent === 'reschedule_booking') score += 0.30;
+  if (expanded.includes('price') && record.intent === 'service_price') score += 0.25;
+  if (expanded.includes('available') && record.intent === 'service_availability') score += 0.25;
+  if (expanded.includes('provider') && record.intent === 'service_provider') score += 0.25;
+
+  const kw = record.keywords.filter(k =>
+    q.includes(k.toLowerCase()) ||
+    expanded.some(t => k.toLowerCase().includes(t) || t.includes(k.toLowerCase()))
   ).length;
-
-  if (queryTokens.length > 0) {
-    score +=
-      (directMatches / queryTokens.length) * 0.35;
-  }
-
-  // ---------------------------------------------------------
-  // Multilingual/canonical matches
-  // ---------------------------------------------------------
-
-  const canonicalMatches = expandedTerms.filter((term) =>
-    searchableText.includes(term)
-  ).length;
-
-  if (expandedTerms.length > 0) {
-    score +=
-      (canonicalMatches / expandedTerms.length) * 0.45;
-  }
-
-  // Strong boost when the record belongs to the service implied by the
-  // customer problem. Prefer the canonical sub_service/category/keywords
-  // instead of inventing a new service.
-  if (canonicalService) {
-    const recordServiceText = [
-      record.sub_service ?? '',
-      record.category,
-      record.keywords.join(' ')
-    ].join(' ').toLowerCase();
-
-    if (
-      (canonicalService === 'plumber' &&
-        /plumb|plumber|tap|faucet|sink|pipe|toilet|drain|नल|पाइप/u.test(recordServiceText)) ||
-      (canonicalService === 'electrician' &&
-        /electrical|electrician|wiring|switch|socket|power|बिजली|वीज/u.test(recordServiceText)) ||
-      (canonicalService === 'carpenter' &&
-        /carpent|carpentry|door|furniture|cabinet|woodwork/u.test(recordServiceText)) ||
-      (canonicalService === 'bike servicing' &&
-        /bike\s*servicing|bike\s*service|bicycle|motorbike|motorcycle|scooter|mechanic|automobile/u.test(recordServiceText))
-    ) {
-      score += 0.35;
-    }
-  }
-
-  // ---------------------------------------------------------
-  // Keyword matches
-  // ---------------------------------------------------------
-
-  const keywordMatches = record.keywords.filter(
-    (keyword) =>
-      queryLower.includes(keyword.toLowerCase()) ||
-      expandedTerms.some((term) =>
-        keyword.toLowerCase().includes(term)
-      )
-  ).length;
-
-  const semanticProblemMatches = [
-    ['tap', /tap|faucet|नल/iu],
-    ['pipe', /pipe|पाइप/iu],
-    ['sink', /sink/iu],
-    ['leak', /leak|leaking|लीक/iu],
-    ['toilet', /toilet/iu],
-    ['drain', /drain/iu],
-    ['bike', /bike|bick|bicycle|motorbike|motorcycle|scooter|mechanic/iu]
-  ].filter(([_, queryRegex]) =>
-    (queryRegex as RegExp).test(query)
-  ).filter(([_, recordRegex]) =>
-    (recordRegex as RegExp).test(searchableText)
-  ).length;
-
-  const semanticKeywordBonus = Math.min(semanticProblemMatches, 3) * 0.08;
-  score += semanticKeywordBonus;
-
-  score += Math.min(keywordMatches, 3) / 3 * 0.20;
-
-  // ---------------------------------------------------------
-  // Intent-specific boosting
-  // ---------------------------------------------------------
-
-  if (
-    expandedTerms.includes('book') &&
-    record.intent === 'how_to_book'
-  ) {
-    score += 0.30;
-  }
-
-  if (
-    expandedTerms.includes('cancel') &&
-    record.intent === 'cancel_booking'
-  ) {
-    score += 0.30;
-  }
-
-  if (
-    expandedTerms.includes('reschedule') &&
-    record.intent === 'reschedule_booking'
-  ) {
-    score += 0.30;
-  }
-
-  if (
-    expandedTerms.includes('price') &&
-    record.intent === 'service_price'
-  ) {
-    score += 0.25;
-  }
-
-  if (
-    expandedTerms.includes('available') &&
-    record.intent === 'service_availability'
-  ) {
-    score += 0.25;
-  }
-
-  if (
-    expandedTerms.includes('provider') &&
-    record.intent === 'service_provider'
-  ) {
-    score += 0.25;
-  }
-
+  score += Math.min(0.20, kw * 0.07);
   return Math.min(1, score);
 }
-
 /**
  * Save knowledge to MongoDB in production.
  */
@@ -457,71 +336,60 @@ export async function saveKnowledge(
 /**
  * Keyword search.
  */
-export async function keywordSearch(
-  query: string,
-  limit = env.TOP_K_KEYWORD
-): Promise<SearchHit[]> {
-  // ---------------------------------------------------------
-  // MOCK MODE
-  // ---------------------------------------------------------
-
+export async function keywordSearch(query: string, limit = env.TOP_K_KEYWORD): Promise<SearchHit[]> {
   if (env.CHATBOT_MODE === 'mock') {
-    const docs = await loadMockKnowledge();
-
-    return docs
-      .map((document) => ({
-        ...document,
-        score: scoreRecord(document, query),
-        sourceType: 'keyword' as const
-      }))
-      .filter((document) => document.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return (await loadMockKnowledge()).map(d => ({
+      ...d, score: scoreRecord(d, query), sourceType: 'keyword' as const
+    })).filter(h => h.score > 0).sort((a,b) => b.score-a.score).slice(0, limit);
   }
 
-  // ---------------------------------------------------------
-  // PRODUCTION MODE
-  // ---------------------------------------------------------
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const collection = mongoDb().collection<KnowledgeRecord>('knowledge');
+  const expanded = expandQuery(q);
 
-  const tokens = tokenize(query)
-    .slice(0, 20);
+  const service =
+    /(?:\bplumb(?:er|ing)\b|tap|faucet|sink|pipe|water\s+leak|leaking\s+pipe|toilet|drain|नल|नळ|पाइप|प्लंबर|प्लम्बिंग|नलसाजी)/iu.test(q) ? 'plumber' :
+    /(?:\belectric(?:ian|al)?\b|wiring|switch|socket|power\s+outlet|इलेक्ट्रीशियन|इलेक्ट्रिशियन|बिजली|वीज)/iu.test(q) ? 'electrician' :
+    /(?:\bcarpent(?:er|ry)\b|door|furniture|cabinet|woodwork|सुतार|सुतारकाम)/iu.test(q) ? 'carpenter' :
+    /(?:\bbike\b|bicycle|motorbike|motorcycle|scooter|mechanic)/iu.test(q) ? 'bike servicing' : null;
 
-  if (!tokens.length) {
-    return [];
+  const booking = expanded.includes('book') ||
+    /\b(?:book|booking|schedule)\b/iu.test(q) ||
+    /बुक(?:िंग|िंग)?/u.test(q) || /बुक\s*कर/iu.test(q) ||
+    /सेवा\s*बुक/iu.test(q) || /बुक\s*कराय/iu.test(q);
+
+  if (service && booking) {
+    const exact = await collection.find({
+      intent: 'how_to_book',
+      sub_service: { $regex: `^${escapeRegex(service)}$`, $options: 'i' }
+    }).limit(limit).toArray();
+    if (exact.length) return exact.map(d => ({
+      ...normalizeRecord(d as unknown as Record<string, unknown>), score: 1, sourceType: 'keyword' as const
+    }));
+
+    const rx = new RegExp(escapeRegex(service), 'iu');
+    const fallback = await collection.find({
+      intent: 'how_to_book',
+      $or: [{keywords: rx}, {question: rx}, {answer: rx}, {sub_service: rx}]
+    }).limit(limit).toArray();
+    if (fallback.length) return fallback.map(d => ({
+      ...normalizeRecord(d as unknown as Record<string, unknown>), score: 1, sourceType: 'keyword' as const
+    }));
   }
 
-  const regex = new RegExp(
-    tokens.map(escapeRegex).join('|'),
-    'i'
-  );
+  const terms = [...new Set([...tokenize(q), ...expanded.filter(t => t.length > 1)])].slice(0, 40);
+  if (!terms.length) return [];
+  const rx = new RegExp(terms.map(escapeRegex).join('|'), 'iu');
+  const docs = await collection.find({
+    $or: [{question: rx}, {answer: rx}, {keywords: rx}, {sub_service: rx}, {category: rx}, {intent: rx}]
+  }).limit(Math.max(limit * 5, 20)).toArray();
 
-  const docs = await mongoDb()
-    .collection<KnowledgeRecord>('knowledge')
-    .find({
-      $or: [
-        { question: regex },
-        { answer: regex },
-        { keywords: regex },
-        { sub_service: regex },
-        { category: regex }
-      ]
-    })
-    .limit(limit)
-    .toArray();
-
-  return docs
-    .map((document) => {
-      const normalized = normalizeRecord(
-        document as unknown as Record<string, unknown>
-      );
-      return {
-        ...normalized,
-        score: scoreRecord(normalized, query),
-        sourceType: 'keyword' as const
-      };
-    })
-    .filter((hit) => hit.score > 0)
-    .sort((a, b) => (b.score - a.score) || a.id.localeCompare(b.id))
+  return docs.map(d => {
+    const r = normalizeRecord(d as unknown as Record<string, unknown>);
+    return {...r, score: scoreRecord(r, q), sourceType: 'keyword' as const};
+  }).filter(h => h.score > 0)
+    .sort((a,b) => (b.score-a.score) || a.id.localeCompare(b.id))
     .slice(0, limit);
 }
 
@@ -570,58 +438,32 @@ export async function discoverServiceFromKnowledge(query: string): Promise<strin
   return best && best.score >= .20 ? best.service : null;
 }
 
-export async function hybridSearch(
-  query: string
-): Promise<SearchHit[]> {
-  // ---------------------------------------------------------
-  // MOCK MODE
-  // ---------------------------------------------------------
+export async function hybridSearch(query: string): Promise<SearchHit[]> {
+  if (env.CHATBOT_MODE === 'mock') return keywordSearch(query, env.TOP_K_FINAL);
 
-  if (env.CHATBOT_MODE === 'mock') {
-    return keywordSearch(
-      query,
-      env.TOP_K_FINAL
-    );
-  }
+  // Deterministic KB retrieval first; embeddings are only the semantic fallback.
+  const keyword = await keywordSearch(query);
+  const strong = keyword.filter(h => h.score >= 0.90);
+  if (strong.length) return strong.slice(0, env.TOP_K_FINAL);
 
-  // ---------------------------------------------------------
-  // PRODUCTION MODE
-  // ---------------------------------------------------------
+  try {
+    const vector = await embed(query);
+    const vectorHits = await vectorSearch(vector);
+    const map = new Map<string, SearchHit>();
 
-  const [vector, keyword] = await Promise.all([
-    embed(query),
-    keywordSearch(query)
-  ]);
-
-  const vectorHits = await vectorSearch(vector);
-
-  const map = new Map<string, SearchHit>();
-
-  for (const hit of vectorHits) {
-    map.set(hit.id, {
-      ...hit,
-      score: hit.score * 0.65
-    });
-  }
-
-  for (const hit of keyword) {
-    const existing = map.get(hit.id);
-
-    if (existing) {
-      existing.score += hit.score * 0.35;
-    } else {
-      map.set(hit.id, {
-        ...hit,
-        score: hit.score * 0.35
-      });
+    for (const h of vectorHits) map.set(h.id, {...h, score: Math.min(1, h.score * 0.65)});
+    for (const h of keyword) {
+      const old = map.get(h.id);
+      if (old) old.score = Math.min(1, old.score + h.score * 0.35);
+      else map.set(h.id, {...h, score: Math.min(1, h.score * 0.35)});
     }
+    return [...map.values()].sort((a,b) => (b.score-a.score) || a.id.localeCompare(b.id))
+      .slice(0, env.TOP_K_FINAL);
+  } catch {
+    // Never lose usable KB results because the embedding provider is unavailable.
+    return keyword.slice(0, env.TOP_K_FINAL);
   }
-
-  return [...map.values()]
-    .sort((a, b) => (b.score - a.score) || a.id.localeCompare(b.id))
-    .slice(0, env.TOP_K_FINAL);
 }
-
 /**
  * Escape regex special characters.
  */

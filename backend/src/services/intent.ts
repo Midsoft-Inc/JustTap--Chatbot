@@ -80,6 +80,12 @@ const rules: Rule[] = [
   },
 
   {
+    intent: 'service_overview',
+    category: 'service',
+    re: /(?:what\s+services\s+(?:does|do)\s+justtap\s+(?:provide|offer|have)|what\s+(?:services|service)\s+(?:are\s+)?available\s+(?:on|in|from)\s+justtap|which\s+services\s+(?:does|do)\s+justtap\s+(?:provide|offer|have)|which\s+services\s+are\s+available|services\s+(?:provided|offered)\s+by\s+justtap|service\s+list\s+(?:of|for)\s+justtap|what\s+can\s+i\s+(?:book|find|get)\s+(?:on|from|with)\s+justtap|justtap\s+service\s+list|justtap\s+services|services\s+on\s+justtap|justtap\s+पर\s+सेवाएं|justtap\s+वरील\s+सेवा|justtap\s+च्या\s+सेवा|justtap\s+वरील\s+सेवा)/iu
+  },
+
+  {
     intent: 'justtap_services',
     category: 'company',
     re: /(?:justtap\s+services|services\s+on\s+justtap|justtap\s+पर\s+सेवाएं|justtap\s+वरील\s+सेवा)/iu
@@ -118,7 +124,7 @@ const rules: Rule[] = [
     intent: 'how_to_book',
     category: 'booking',
     re:
-      /(?:\b(?:how\s+(?:can\s+i|do\s+i)?\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
+      /(?:\b(?:how\s+to\s+book|how\s+(?:can\s+i|do\s+i)\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
   },
 
   {

@@ -20,9 +20,9 @@ import { detectLanguage } from '../services/language.js';
 import { normalizeQuery } from '../services/translation.js';
 import { runSemanticChain, SemanticResult } from './semanticChain.js';
 import { runRagChain } from './retrieval.js';
-import { getRecentTurns, MemoryTurn } from './memory.js';
+import { getRecentTurns, getConversationLanguage, MemoryTurn } from './memory.js';
 import { getCachedAnswer } from './cache.js';
-import { isContentless, stripEmoji } from './textSignal.js';
+import { isContentless, stripEmoji, normalizeDomainQuery } from './textSignal.js';
 import { SearchHit } from '../models/types.js';
 
 export type OrchestratorInput = {
@@ -95,24 +95,53 @@ function smallTalkReply(intent: string, language: string): string {
 const languageStep = RunnableLambda.from(async (input: OrchestratorInput) => {
   const cleanedMessage = stripEmoji(input.message) || input.message;
   const inputLanguage = detectLanguage(cleanedMessage);
-  const responseLanguage = input.responseLanguage || inputLanguage || 'en';
-  const [normalizedMessage, history] = await Promise.all([
-    normalizeQuery(cleanedMessage, inputLanguage),
-    getRecentTurns(input.sessionId)
+  const [normalizedMessage, history, storedConversationLanguage] = await Promise.all([
+    normalizeQuery(cleanedMessage, inputLanguage).then(normalizeDomainQuery),
+    getRecentTurns(input.sessionId),
+    getConversationLanguage(input.sessionId)
   ]);
+
+  // The language of the current message is only the understanding language.
+  // Once a conversation has a response language, keep using it even when
+  // the customer switches languages for an individual question. An explicit
+  // responseLanguage from the API remains the strongest override.
+  const responseLanguage =
+    input.responseLanguage?.trim().toLowerCase() ||
+    storedConversationLanguage ||
+    inputLanguage ||
+    'en';
+
   return { ...input, language: inputLanguage, responseLanguage, normalizedMessage, history };
 });
 
 // Step 3: Semantic LLM Chain -> Intent / Service / Entities -> Conversation State
 const semanticStep = RunnableLambda.from(
   async (state: OrchestratorInput & { language: string; responseLanguage: string; normalizedMessage: string; history: MemoryTurn[] }) => {
-    const semantic = await runSemanticChain({
+    const loginPattern =
+      /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(state.normalizedMessage) &&
+      /\b(how|can|do|to|help|access|account|kaise|kese|kare|karo|karu|karna|karne)\b/i.test(state.normalizedMessage);
+
+    if (loginPattern) {
+      const semantic: SemanticResult = {
+        intent: 'login',
+        category: 'account',
+        service: null,
+        entities: {},
+        confidence: 1,
+        conversationState: 'complete',
+        supportIssue: false
+      };
+      return { ...state, semantic };
+    }
+
+    const semanticRaw = await runSemanticChain({
       message: state.message,
       normalizedMessage: state.normalizedMessage,
       language: state.language,
       history: state.history
     });
-    return { ...state, semantic };
+
+    return { ...state, semantic: semanticRaw };
   }
 );
 
@@ -157,7 +186,32 @@ const routeStep = RunnableLambda.from(
     // This now includes unknown_query: instead of an immediate canned
     // reply, it still gets a real retrieval pass, so the fallback stays
     // knowledge-bound rather than generic.
-    const retrievalQuery = [normalizedMessage, semantic.intent, semantic.category, semantic.service ?? '']
+    const loginRetrievalTerms =
+      semantic.intent === 'login'
+        ? 'login sign in log in account authentication access'
+        : '';
+
+    // Keep BOTH the original user-language message and the normalized
+    // canonical message in the retrieval query. This prevents RAG from
+    // depending entirely on translation/normalization for Hindi, Marathi,
+    // and Roman Hindi/Marathi queries.
+    //
+    // Example:
+    //   मैं प्लंबर बुक करना चाहता हूँ।
+    //   + I want to book plumber
+    //   + how_to_book + service + plumber
+    //
+    // knowledge.ts can then match either the native-language aliases or
+    // the canonical English/service terms.
+    const retrievalQuery = [
+      state.message,
+      normalizedMessage,
+      semantic.intent,
+      semantic.category,
+      semantic.service ?? '',
+      ...Object.values(semantic.entities),
+      loginRetrievalTerms
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -216,6 +270,10 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
   const cacheMs = Date.now() - tCache;
 
   if (cached) {
+    console.log('[CACHE] hit', {
+      language: afterLanguage.responseLanguage,
+      normalizedMessage: afterLanguage.normalizedMessage
+    });
     return {
       language: afterLanguage.responseLanguage,
       normalizedMessage: afterLanguage.normalizedMessage,
@@ -227,6 +285,11 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
       timings: { language: languageMs, cacheLookup: cacheMs }
     };
   }
+
+  console.log('[CACHE] miss', {
+    language: afterLanguage.responseLanguage,
+    normalizedMessage: afterLanguage.normalizedMessage
+  });
 
   const tSemantic = Date.now();
   const afterSemantic = await semanticStep.invoke(afterLanguage);

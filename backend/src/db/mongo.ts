@@ -1,5 +1,8 @@
+import dns from 'node:dns';
 import { MongoClient, Db } from 'mongodb';
 import { env } from '../config/env.js';
+
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 let client: MongoClient;
 let db: Db;
@@ -28,6 +31,7 @@ async function ensureIndexes() {
   const messages = db.collection('messages');
   const tickets = db.collection('tickets');
   const ticketMessages = db.collection('ticket_messages');
+  const chatbotCache = db.collection('chatbot_cache');
 
   await knowledge.createIndex({ category: 1, sub_service: 1, intent: 1 });
   await knowledge.createIndex({ language: 1 });
@@ -38,6 +42,7 @@ async function ensureIndexes() {
   await tickets.createIndex({ status: 1, createdAt: -1 });
   await tickets.createIndex({ customerReference: 1, createdAt: -1 });
   await ticketMessages.createIndex({ ticketId: 1, createdAt: 1 });
+  await chatbotCache.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
 
 

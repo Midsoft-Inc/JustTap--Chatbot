@@ -131,17 +131,36 @@ export async function chat(input: ChatRequest) {
       answer = routed.answer;
     } else {
       const tGenerate = Date.now();
-      answer = await runAnswerChain({
-        message: input.message,
-        normalizedMessage,
-        language,
-        intent: semantic.intent,
-        category: semantic.category,
-        hits,
-        topScore,
-        minRelevanceScore: env.MIN_RELEVANCE_SCORE
-      });
-      chatTimings.answerGenerate = Date.now() - tGenerate;
+      try {
+        answer = await runAnswerChain({
+          message: input.message,
+          normalizedMessage,
+          language,
+          intent: semantic.intent,
+          category: semantic.category,
+          hits,
+          topScore,
+          minRelevanceScore: env.MIN_RELEVANCE_SCORE
+        });
+      } catch (error) {
+        chatTimings.answerGenerate = Date.now() - tGenerate;
+        // Hugging Face may temporarily reject inference (for example when
+        // included credits are exhausted). Do not turn that provider failure
+        // into a 502 or an invented answer. Return a deterministic,
+        // language-correct safe fallback instead.
+        const providerError = String(error);
+        if (/402|depleted|credits|inference providers/i.test(providerError)) {
+          const fallbacks: Record<string, string> = {
+            hi: 'माफ़ कीजिए, अभी उत्तर तैयार करने में अस्थायी समस्या है। कृपया थोड़ी देर बाद फिर से प्रयास करें।',
+            mr: 'क्षमस्व, सध्या उत्तर तयार करण्यात तात्पुरती अडचण आहे. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.',
+            en: 'Sorry, there is a temporary problem preparing the answer. Please try again shortly.'
+          };
+          answer = fallbacks[language] ?? fallbacks.en;
+        } else {
+          throw error;
+        }
+      }
+      chatTimings.answerGenerate = chatTimings.answerGenerate ?? Date.now() - tGenerate;
 
       // Cache the fresh answer for next time. Fire-and-forget: caching
       // is an optimization, the customer shouldn't wait on it, and a
@@ -150,19 +169,43 @@ export async function chat(input: ChatRequest) {
       // entry point in api/index.ts, unlike the message-log writes below
       // -- worst case here is simply a missed cache write, not a lost
       // customer-facing record.)
-      // Cache only a high-confidence, knowledge-grounded answer.
-      // Never cache unknown/fallback answers because a hallucinated or
-      // weakly grounded response would otherwise be replayed to every user.
+      // Cache only successful, grounded answers.
+      // Known intents with at least one retrieved KB hit are cacheable even
+      // when the reranker score is below MIN_RELEVANCE_SCORE. The score is
+      // used to decide answer grounding, but requiring it here can prevent
+      // otherwise valid FAQ answers (for example login) from ever being
+      // written to the cache. Never cache the deterministic provider-error
+      // fallback.
+      const providerFallback =
+        /temporary problem preparing the answer|अस्थायी समस्या|तात्पुरती अडचण/i.test(answer);
+
       if (
+        !providerFallback &&
         semantic.intent !== 'unknown_query' &&
-        hits.length > 0 &&
-        topScore >= env.MIN_RELEVANCE_SCORE
+        hits.length > 0
       ) {
-        void setCachedAnswer(normalizedMessage, language, {
-          answer,
-          intent: semantic.intent,
-          category: semantic.category
-        });
+        try {
+          // Do not make the customer wait for a cache write. setCachedAnswer
+          // populates the local L1 cache synchronously, then persists the same
+          // value to MongoDB for cross-device reuse.
+          void setCachedAnswer(normalizedMessage, language, {
+            answer,
+            intent: semantic.intent,
+            category: semantic.category
+          })
+            .then(() => {
+              console.log('[CACHE] stored', {
+                language,
+                intent: semantic.intent,
+                normalizedMessage
+              });
+            })
+            .catch((cacheError) => {
+              console.warn('[CACHE] store failed:', cacheError);
+            });
+        } catch (cacheError) {
+          console.warn('[CACHE] store scheduling failed:', cacheError);
+        }
       }
     }
 
@@ -191,6 +234,9 @@ export async function chat(input: ChatRequest) {
           sessionId,
           createdAt: new Date(),
           customerReference: input.customerReference
+        },
+        $set: {
+          responseLanguage: language
         }
       },
       { upsert: true }
