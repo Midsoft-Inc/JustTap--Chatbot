@@ -1,11 +1,3 @@
-// src/langchain/memory.ts
-//
-// Conversation state + memory layer used by the semantic chain to resolve
-// context across turns (diagram: "Conversation State" -> feeds back into
-// the Semantic LLM Chain). Reuses the existing Mongo connection in
-// production mode; in mock mode (no DB configured) it keeps a small
-// in-process buffer per session so local/dev runs still get real
-// multi-turn context instead of none at all.
 
 import { mongoDb } from '../db/mongo.js';
 import { env } from '../config/env.js';

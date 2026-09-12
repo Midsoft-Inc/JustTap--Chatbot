@@ -1,7 +1,3 @@
-// src/langchain/cache.ts
-// MongoDB-backed, cross-session/device answer cache.
-// Cache identity is based on the normalized question + response language,
-// NOT sessionId. This lets the same FAQ answer be reused across devices.
 
 import crypto from 'node:crypto';
 import { mongoDb } from '../db/mongo.js';

@@ -1,24 +1,3 @@
-// src/services/chat.ts
-//
-// Entry point for a customer chat turn. The actual routing decision
-// (small talk / clarification / support ticket / grounded RAG answer)
-// now lives in the LangChain orchestrator:
-//
-//   src/langchain/orchestrator.ts   - language -> normalize -> semantic
-//                                      chain -> conversation state routing
-//   src/langchain/semanticChain.ts  - intent / service / entities, with
-//                                      conversation memory for context
-//                                      resolution ("I need a technician"
-//                                      after an earlier problem message)
-//   src/langchain/retrieval.ts      - hybrid vector+keyword RAG chain
-//                                      with an explicit reranker step
-//   src/langchain/answerChain.ts    - grounded answer LLM chain
-//   src/langchain/memory.ts         - conversation state + memory
-//
-// This file keeps the parts that are intentionally NOT part of that
-// orchestration: session id handling, support-ticket creation, and all
-// Mongo persistence -- the "other connections" that were asked to stay
-// untouched.
 
 import crypto from 'node:crypto';
 

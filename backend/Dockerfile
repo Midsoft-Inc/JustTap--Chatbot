@@ -1,7 +1,7 @@
 # =========================
-# Frontend build
+# Stage 1: Build Frontend
 # =========================
-FROM node:22-alpine AS frontend-build
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -9,48 +9,50 @@ COPY frontend/package*.json ./
 RUN npm ci
 
 COPY frontend/ ./
+
 RUN npm run build
 
 
 # =========================
-# Backend build
+# Stage 2: Build Backend
 # =========================
-FROM node:22-alpine AS backend-build
+FROM node:24-alpine AS backend-builder
 
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
 RUN npm ci
 
-COPY backend/tsconfig.json ./
-COPY backend/src ./src
-COPY backend/scripts ./scripts
-COPY backend/knowledge ./knowledge
+COPY backend/ ./
 
 RUN npm run build
 
 
 # =========================
-# Production
+# Stage 3: Production
 # =========================
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=8080
+ENV HOST=0.0.0.0
 
-# Backend dependencies
-COPY backend/package*.json ./
+# Backend package files
+COPY backend/package*.json ./backend/
+
+WORKDIR /app/backend
+
 RUN npm ci --omit=dev
 
-# Backend compiled files
-COPY --from=backend-build /app/backend/dist ./dist
+# Backend compiled application
+COPY --from=backend-builder /app/backend/dist ./dist
 
-# Knowledge files
-COPY --from=backend-build /app/backend/knowledge ./knowledge
+# Frontend production build
+COPY --from=frontend-builder /app/frontend/dist /app/frontend-dist
 
-# Frontend compiled files
-COPY --from=frontend-build /app/frontend/dist ./frontend-dist
+WORKDIR /app/backend
 
 EXPOSE 8080
 

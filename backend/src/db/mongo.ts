@@ -1,37 +1,74 @@
-import dns from 'node:dns';
 import { MongoClient, Db } from 'mongodb';
 import { env } from '../config/env.js';
 
-dns.setServers(['8.8.8.8', '1.1.1.1']);
-
-let client: MongoClient;
-let db: Db;
+// Keep the MongoDB client alive between Vercel function invocations when the
+// runtime is reused. This avoids opening a new connection and recreating
+// indexes on every request while preserving the existing application logic.
+let client: MongoClient | null = null;
+let db: Db | null = null;
+let connectPromise: Promise<Db> | null = null;
 
 export async function connectMongo() {
-  client = new MongoClient(env.MONGODB_URI);
-  await client.connect();
-  db = client.db(env.MONGODB_DB);
-  await ensureIndexes();
-  await ensureVectorSearchIndex();
-  return db;
+  if (db) {
+    return db;
+  }
+
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  connectPromise = (async () => {
+    const nextClient = new MongoClient(env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000
+    });
+
+    await nextClient.connect();
+
+    const nextDb = nextClient.db(env.MONGODB_DB);
+    client = nextClient;
+    db = nextDb;
+
+    await ensureIndexes();
+    await ensureVectorSearchIndex();
+
+    return nextDb;
+  })();
+
+  try {
+    return await connectPromise;
+  } catch (error) {
+    // Do not leave a failed client as the cached connection.
+    client = null;
+    db = null;
+    throw error;
+  } finally {
+    connectPromise = null;
+  }
 }
 
 export function mongoDb() {
-  if (!db) throw new Error('MongoDB is not connected');
+  if (!db) {
+    throw new Error('MongoDB is not connected');
+  }
   return db;
 }
 
 export async function closeMongo() {
-  if (client) await client.close();
+  if (client) {
+    await client.close();
+    client = null;
+    db = null;
+  }
 }
 
 async function ensureIndexes() {
-  const knowledge = db.collection('knowledge');
-  const conversations = db.collection('conversations');
-  const messages = db.collection('messages');
-  const tickets = db.collection('tickets');
-  const ticketMessages = db.collection('ticket_messages');
-  const chatbotCache = db.collection('chatbot_cache');
+  const knowledge = mongoDb().collection('knowledge');
+  const conversations = mongoDb().collection('conversations');
+  const messages = mongoDb().collection('messages');
+  const tickets = mongoDb().collection('tickets');
+  const ticketMessages = mongoDb().collection('ticket_messages');
+  const chatbotCache = mongoDb().collection('chatbot_cache');
 
   await knowledge.createIndex({ category: 1, sub_service: 1, intent: 1 });
   await knowledge.createIndex({ language: 1 });
@@ -45,16 +82,11 @@ async function ensureIndexes() {
   await chatbotCache.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
 
-
-/**
- * Create the MongoDB Atlas Vector Search index for the knowledge collection.
- * This only prepares MongoDB for vector storage/search. The existing RAG
- * retrieval path remains unchanged and continues to use its current adapter.
- */
 async function ensureVectorSearchIndex() {
   try {
-    const knowledge = db.collection('knowledge');
-    const indexName = process.env.MONGODB_VECTOR_INDEX || 'knowledge_vector_index';
+    const knowledge = mongoDb().collection('knowledge');
+    const indexName =
+      process.env.MONGODB_VECTOR_INDEX || 'knowledge_vector_index';
     const dimensions = Number(process.env.VECTOR_SIZE || 384);
 
     if (typeof (knowledge as any).createSearchIndex !== 'function') {
@@ -62,6 +94,7 @@ async function ensureVectorSearchIndex() {
     }
 
     const indexes = await (knowledge as any).listSearchIndexes().toArray();
+
     const exists = indexes.some((index: any) => index.name === indexName);
 
     if (!exists) {
@@ -76,30 +109,15 @@ async function ensureVectorSearchIndex() {
               numDimensions: dimensions,
               similarity: 'cosine'
             },
-            {
-              type: 'filter',
-              path: 'language'
-            },
-            {
-              type: 'filter',
-              path: 'intent'
-            },
-            {
-              type: 'filter',
-              path: 'category'
-            },
-            {
-              type: 'filter',
-              path: 'sub_service'
-            }
+            { type: 'filter', path: 'language' },
+            { type: 'filter', path: 'intent' },
+            { type: 'filter', path: 'category' },
+            { type: 'filter', path: 'sub_service' }
           ]
         }
       });
     }
   } catch (error) {
-    // Atlas search-index creation can be unavailable on local MongoDB or on
-    // accounts where the feature is not enabled. Database startup must not
-    // break the existing chatbot because of this optional index.
     console.warn('[MONGO] Vector Search index setup skipped:', error);
   }
 }

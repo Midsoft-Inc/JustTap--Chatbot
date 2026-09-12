@@ -1,22 +1,3 @@
-// src/langchain/semanticChain.ts
-//
-// Diagram stage: Semantic LLM Chain -> Intent / Service / Entities ->
-// Conversation State.
-//
-// This replaces the ad-hoc "classifyIntent() then maybe understandQuery()"
-// branching that used to live inline in chat.ts with a single composed
-// LangChain RunnableSequence:
-//
-//   1. deterministicStep  - existing regex rules (services/intent.ts),
-//                            cheap and reliable for greetings, payment
-//                            problems, provider/company questions, etc.
-//   2. semanticStep       - for the intents rules genuinely can't resolve
-//                            (booking/need/unknown/knowledge), ask the LLM
-//                            for intent + service + entities +
-//                            conversationState, grounded in the dataset's
-//                            actual service catalog and the last few turns
-//                            of conversation.
-//   3. mergeStep          - combine both into one SemanticResult.
 
 import { RunnableLambda, RunnableSequence } from '@langchain/core/runnables';
 

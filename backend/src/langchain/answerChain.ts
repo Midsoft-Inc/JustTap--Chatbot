@@ -1,15 +1,3 @@
-// src/langchain/answerChain.ts
-//
-// Diagram stage: Grounded Answer LLM Chain -> User's Language.
-//
-// This is the single place that turns retrieved KB context into a
-// customer-facing answer. It replaces the two near-duplicate prompt
-// blocks that used to live inline in chat.ts (5A strong match / 5C low
-// score guidance). The strict grounding rules themselves (never invent
-// services/prices/providers, answer only from context, respond in the
-// user's language, etc.) live in the model's system prompt -- see
-// services/huggingface.ts generate() -- so this file only builds the
-// task-specific instructions for each call.
 
 import { generate } from '../services/huggingface.js';
 import { SearchHit } from '../models/types.js';
@@ -59,7 +47,12 @@ Important:
 - Do not introduce unrelated services.
 - Do not introduce unrelated examples.
 - Do not say a service is unavailable.
-- Answer entirely in the requested response language.
+- Answer entirely in the requested response language. Every word of the
+  answer must be in that language's script -- do not leave any part of the
+  sentence in English (or any other language) inside an otherwise-Hindi
+  (or other non-English) answer, including common nouns and instructions.
+  Only proper nouns that have no real translation (the app name "JustTap")
+  may stay as-is.
 - Keep the answer concise.
 `.trim();
 
@@ -82,8 +75,8 @@ Important:
   // information rather than describe steps it has no source for.
   const safeFallbacks: Record<string, string> = {
     en: "I don't have exact information about that JustTap topic yet. The JustTap support team can help you with the exact details.",
-    hi: "मेरे पास अभी इस JustTap विषय की सटीक जानकारी नहीं है। JustTap की support team आपको सही जानकारी देने में मदद कर सकती है।",
-    mr: "माझ्याकडे सध्या या JustTap विषयाची अचूक माहिती नाही. JustTap ची support team तुम्हाला योग्य माहिती देण्यात मदत करू शकते."
+    hi: "मेरे पास अभी इस JustTap विषय की सटीक जानकारी नहीं है। JustTap की सहायता टीम आपको सही जानकारी देने में मदद कर सकती है।",
+    mr: "माझ्याकडे सध्या या JustTap विषयाची अचूक माहिती नाही. JustTap ची सहाय्य टीम तुम्हाला योग्य माहिती देण्यात मदत करू शकते."
   };
 
   // These are the only generic instructions we can safely provide without

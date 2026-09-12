@@ -19,6 +19,7 @@
     "@huggingface/inference": "^4.13.28",
     "@langchain/core": "^1.2.9",
     "@qdrant/js-client-rest": "^1.15.1",
+    "@types/node": "^24.13.4",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.1",
     "fastify": "^5.5.0",
@@ -27,9 +28,11 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@types/node": "^24.2.1",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

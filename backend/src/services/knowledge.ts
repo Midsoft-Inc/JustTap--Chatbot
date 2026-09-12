@@ -246,15 +246,31 @@ function expandQuery(query: string): string[] {
   return [...terms];
 }
 
+const STOPWORDS = new Set([
+  'a','an','the','is','are','am','i','me','my','we','our','you','your','to','for','of','on','in','at',
+  'with','and','or','tell','about','please','can','could','would','want','need','like','how','what',
+  'where','when','do','does','did','give','get','just','it','this','that','also','so','not','be','has',
+  'have','had','will','shall','if','then','than','there','their','they','them','him','her','his',
+  // The app's own name appears in nearly every KB record's answer text
+  // (they're all JustTap app FAQs), so on its own it's not a useful
+  // signal for which record is actually relevant -- without this, a
+  // fully generic query like "tell me about justtap" would still get a
+  // 0.40 base-score match against almost every record in the dataset.
+  'justtap'
+]);
+
 /**
- * Extract useful tokens from a query.
+ * Extract useful tokens from a query, filtering out common filler words
+ * (stopwords) so a query like "tell me about justtap" scores based on
+ * "justtap" alone rather than getting noisy partial credit from "tell",
+ * "me", and "about" matching against unrelated records too.
  */
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^\p{L}\p{N}_-]+/u)
     .map((token) => token.trim())
-    .filter((token) => token.length > 1);
+    .filter((token) => token.length > 1 && !STOPWORDS.has(token));
 }
 
 /**
@@ -276,8 +292,12 @@ function scoreRecord(record: KnowledgeRecord, query: string): number {
   if (question && q === question) return 1;
   if (question.length >= 8 && (question.includes(q) || q.includes(question))) return 0.98;
 
+  // Real word-boundary matching, not substring matching -- "me" must not
+  // count as a match just because the record's text contains "sometimes".
+  const searchableTokens = new Set(tokenize(searchable));
+
   let score = 0;
-  const direct = tokens.filter(t => searchable.includes(t)).length;
+  const direct = tokens.filter(t => searchableTokens.has(t)).length;
   if (tokens.length) score += (direct / tokens.length) * 0.40;
 
   for (const canonical of Object.keys(multilingualAliases)) {
