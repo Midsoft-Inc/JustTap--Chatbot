@@ -1,20 +1,16 @@
-
-
 import Fastify from 'fastify';
-import { pathToFileURL } from 'node:url';
-
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-
 import { env } from './config/env.js';
 import { connectMongo } from './db/mongo.js';
 import { ensureCollection } from './services/vector.js';
-
 import { chatRoutes } from './routes/chat.js';
 import { ticketRoutes } from './routes/tickets.js';
 import { healthRoutes } from './routes/health.js';
+
 console.log('[STARTUP] server.ts loaded');
+
 
 export const app = Fastify({
   logger: true,
@@ -93,9 +89,7 @@ export async function initializeApp() {
 
     return reply
       .code(statusCode)
-      .send({
-        error: 'Internal server error'
-      });
+      .send({ error: 'Internal server error' });
   });
 
   console.log('[STARTUP] before ready');
@@ -109,10 +103,19 @@ export async function initializeApp() {
   return app;
 }
 
-
+// CRITICAL: only bind a real network port when this file is run DIRECTLY
+// (local dev, e.g. `tsx watch src/server.ts`), never as a side effect of
+// being IMPORTED. Confirmed empirically: importing this file from a
+// separate diagnostic function (api/diag4.ts) crashed instantly, before
+// that file's own try/catch could even run -- proving the unconditional
+// app.listen() call below fires immediately on import, regardless of what
+// the importer actually wants. That's almost certainly the real cause of
+// the original hang/crash too: whatever Vercel's zero-config Fastify
+// wrapper does internally to load this file per-request very likely
+// triggers this same side effect.
 const isMainModule =
   process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href;
+  import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`;
 
 if (isMainModule) {
   try {

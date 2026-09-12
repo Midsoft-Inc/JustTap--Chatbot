@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Local/dev-only env overrides. .env.production is intentionally NOT
+# ignored -- it's a committed template (see the comment inside it) that
+# documents the default for a same-origin deployment; set VITE_API_URL in
+# Vercel's dashboard when deploying the frontend separately from the backend.
+.env
+.env.local
+.env.*.local
+
+# Editor/OS noise
+.DS_Store
+*.log
