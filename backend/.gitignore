@@ -8,6 +8,7 @@
 .env.test
 .env.production
 .env.*.local
+.env.example
 
 # Keep example configuration files
 !.env.example
