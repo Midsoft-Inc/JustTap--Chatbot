@@ -14,7 +14,23 @@ export type GroundedAnswerInput = {
 };
 
 export async function runAnswerChain(input: GroundedAnswerInput): Promise<string> {
-  const strongMatch = input.hits.length > 0 && input.topScore >= input.minRelevanceScore;
+  const strongMatch =
+    input.hits.length > 0 &&
+    input.topScore >= input.minRelevanceScore;
+
+  // Return predefined KB answers directly.
+  // This preserves their exact structure and avoids LLM paraphrasing.
+  const predefinedAnswerIds = new Set([
+    'svc_overview_001',
+  ]);
+
+  if (
+    strongMatch &&
+    input.hits[0]?.id &&
+    predefinedAnswerIds.has(input.hits[0].id)
+  ) {
+    return input.hits[0].answer;
+  }
 
   if (strongMatch) {
     const context = input.hits
