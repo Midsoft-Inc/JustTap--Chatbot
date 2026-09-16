@@ -7,7 +7,7 @@
     "sub_service": null,
     "intent": "knowledge",
     "question": "What services does JustTap provide?",
-    "answer": "### What is JustTap?\n\nJustTap provides various services, including:\n\n* Home Services (Plumber, Electrician, Carpenter, AC Technician, Painter)\n* Auto Services (Bike Mechanic, Car Mechanic, Car Wash)\n* Domestic Services (Maid Service, Security Guard, Gardener, Cleaner)\n* Technical Services (Software Developer, Web Designer, Mobile App Developer, Computer Repair Technician, Digital Marketing Expert)\n* Education Services (Online Tutor, Spoken English Trainer, Computer Trainer, Coaching Institute)\n* Business Services (Accountant, Tax Consultant, CA, Insurance Agent, Financial Advisor)\n\nTo book a service, use the relevant service option in the JustTap application and follow the booking instructions shown there.\n\n[Learn More — JustTap](https://www.justtapnow.com/about)",
+    "answer": "JustTap provides Home Services (Plumber, Electrician, Carpenter, AC Technician, Painter), Auto Services (Bike Mechanic, Car Mechanic, Car Wash), Domestic Services (Maid Service, Security Guard, Gardener, Cleaner), Technical Services (Software Developer, Web Designer, Mobile App Developer, Computer Repair Technician, Digital Marketing Expert), Education Services (Online Tutor, Spoken English Trainer, Computer Trainer, Coaching Institute), and Business Services (Accountant, Tax Consultant, CA, Insurance Agent, Financial Advisor).",
     "keywords": [
       "JustTap",
       "services",
@@ -18,26 +18,6 @@
       "technical services",
       "education services",
       "business services"
-    ],
-    "action": "none",
-    "priority": "high"
-  },
-  {
-    "id": "booking_overview_001",
-    "language": "en",
-    "category": "booking",
-    "sub_category": "service_booking",
-    "sub_service": null,
-    "intent": "how_to_book",
-    "question": "How can I book a service?",
-    "answer": "### 📅 Booking a Service\n\nTo book a service:\n\n1. Open the JustTap application.\n2. Select the required service.\n3. Follow the booking instructions shown in the application.\n4. Complete your booking.\n\nIf you want more information about booking a service, [Learn More — JustTap](https://www.justtapnow.com/about)",
-    "keywords": [
-      "book a service",
-      "booking a service",
-      "how to book",
-      "how can I book",
-      "book service",
-      "service booking"
     ],
     "action": "none",
     "priority": "high"
