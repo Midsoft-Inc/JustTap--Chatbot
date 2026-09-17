@@ -13,24 +13,9 @@ export type GroundedAnswerInput = {
   minRelevanceScore: number;
 };
 
+
 export async function runAnswerChain(input: GroundedAnswerInput): Promise<string> {
-  const strongMatch =
-    input.hits.length > 0 &&
-    input.topScore >= input.minRelevanceScore;
-
-  // Return predefined KB answers directly.
-  // This preserves their exact structure and avoids LLM paraphrasing.
-  const predefinedAnswerIds = new Set([
-    'svc_overview_001',
-  ]);
-
-  if (
-    strongMatch &&
-    input.hits[0]?.id &&
-    predefinedAnswerIds.has(input.hits[0].id)
-  ) {
-    return input.hits[0].answer;
-  }
+  const strongMatch = input.hits.length > 0 && input.topScore >= input.minRelevanceScore;
 
   if (strongMatch) {
     const context = input.hits
@@ -72,67 +57,73 @@ Important:
 - Do not say that a service is unavailable unless the knowledge context explicitly states that it is unavailable.
 
 - Answer entirely in the requested response language.
-- For Hindi responses, write the complete answer in Hindi script.
-- For Marathi responses, write the complete answer in Marathi script.
-- For English responses, write the complete answer in English.
-- Do not leave unnecessary English words inside Hindi or Marathi responses.
-- Proper nouns that have no suitable translation may remain unchanged.
-- The app name "JustTap" must remain unchanged.
+- For Hindi responses, write explanatory sentences in Hindi script.
+- For Marathi responses, write explanatory sentences in Marathi script.
+- For English responses, write explanatory sentences in English.
+- Keep "JustTap" unchanged.
+- Keep every service name and category name exactly as provided in the knowledge context.
+- Do not translate, transliterate, rename, shorten, merge, or otherwise modify service names or category names.
 
-- Keep the answer concise but complete.
-- Use a clear and readable structure.
-- Do not use Markdown bold (**text**).
-- Do not use Markdown italic (*text*).
-- Do not use Markdown heading syntax (#, ##, ###).
-- Do not use separator lines such as ====, ----, or ****.
+- Use the same structured response format for every answer.
 
-- For a complete services overview:
-  - Start with:
-    🌟 JustTap Services Overview
-  - Use a short introductory sentence.
-  - Use "-" for category names.
-  - Use numbered lists for services.
-  - Keep one blank line between categories.
-  - Include all relevant categories and services from the knowledge context.
-  - Do not add booking, pricing, cancellation, or other information unless the user explicitly asks for it.
+
+- Do not use #, ##, ###, or other Markdown heading syntax.
+- After the heading, present the information point-by-point.
+- Use "-" for explanatory points or lists.
+- Use numbered lists when explaining ordered steps or procedures.
+- Keep paragraphs short.
+- Do not write long blocks of text when the information can be presented as points.
 
 - For a specific service:
-  - Answer only about that service.
+
+  - Answer only the user's current request about that service.
+  - Provide only information relevant to that service.
+  - Present the information point-by-point.
+  - Do not mention, list, recommend, or append any other service or category unless the user explicitly asks for them.
   - Do not append the complete services overview.
 
+- For a specific category:
+  - Create a heading using the category name.
+  - Provide only that category's supported services.
+  - Present services point-by-point or as a numbered list when appropriate.
+
 - For a booking request:
-  - Answer only the booking-related information supported by the knowledge context.
-  - Do not append the services overview.
+  - Create a short booking-related heading using the exact requested service name.
+  - Answer only the user's booking request for that service.
+  - Provide only the booking information supported by the knowledge context.
+  - If the knowledge context provides ordered booking steps, use a numbered list.
+  - If the user asks about a service, booking, cancellation, or price, print "Learn More" at the end of the response.
+  - Do not add unsupported booking steps.
+  - Do not mention, list, recommend, or append any other service or category unless the user explicitly asks for them.
+  - Use numbered lists for services under each category.
+  - Include the complete relevant list from the knowledge context.
+  - Do not add booking, pricing, cancellation, or unrelated information unless explicitly requested.
 
-- Preserve the exact service names and categories from the knowledge context.
-- Do not invent, rename, merge, or remove services.
-- Use "-" for category bullets.
-- Use numbered lists for services inside a category.
-- Keep one blank line between categories.
-
-- If the user asks for a specific category, provide only that category and its supported services.
-- If the user asks for a specific service, answer only about that service.
-- If the user asks a booking question, answer only the booking-related information supported by the knowledge context.
-- Do not append the complete JustTap Services Overview to a specific-service or booking response.
-
-- If the user asks for a services overview, provide all relevant categories and their complete service lists from the knowledge context.
+- Preserve the exact service names and category names from the knowledge context.
+- Do not invent, rename, merge, reorder, or remove services.
 - Do not use "..." when the knowledge context contains the complete list.
+- Use "-" for categories.
+- Use numbered lists for services under each category.
+- Include the complete relevant list from the knowledge context.
+- Do not add booking, pricing, cancellation, or unrelated information unless explicitly requested.
+- Analyze ONLY the customer's CURRENT question.
+- Do not inherit language, intent, category, or service from previous conversation messages unless the current question explicitly refers to them.
+- Determine the language from the current question itself.
+- A Hindi conversation does not mean the current question is Hindi.
+- If the current question is English, detected language must be English.
+- If the current question is Hindi, detected language must be Hindi.
+- If the current question is Marathi, detected language must be Marathi.
+- Determine intent from what the customer is asking in the CURRENT question.
+- For Hindi:
+  - Write the explanatory content in Hindi.
+  - Keep service names and category names exactly as provided in the knowledge context.
 
-- For the JustTap Services Overview, write:
-  🌟 JustTap Services Overview
+- For Marathi:
+  - Write the explanatory content in Marathi.
+  - Keep service names and category names exactly as provided in the knowledge context.
 
-- The 🌟 emoji must appear before the heading.
-- Do not add ** around the heading.
-- Do not add any separator below the heading.
-- Preserve any other emoji that is explicitly present in the knowledge context.
-
-- If the user asks about a specific category, provide only that category and its supported services.
-- If the user asks about a specific service, answer only with information supported by the knowledge context.
-
-- If the user asks how to do something, provide the supported instructions as numbered steps.
-- If the user asks about a problem, use these sections only when supported by the knowledge context:
-  **Problem**
-  **Relevant**
+- For English:
+  - Write the complete response in English.
 
 `.trim();
 

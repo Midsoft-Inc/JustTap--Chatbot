@@ -95,10 +95,10 @@ const languageStep = RunnableLambda.from(async (input: OrchestratorInput) => {
   // are only fallbacks for the (currently rare, since the frontend always
   // sends a toggle value) case where no explicit responseLanguage arrives.
   const responseLanguage =
-    input.responseLanguage?.trim().toLowerCase() ||
-    inputLanguage ||
-    storedConversationLanguage ||
-    'en';
+  inputLanguage ||
+  input.responseLanguage?.trim().toLowerCase() ||
+  storedConversationLanguage ||
+  'en';
 
   return { ...input, language: inputLanguage, responseLanguage, normalizedMessage, history };
 });

@@ -270,6 +270,215 @@ function Mascot({
   );
 }
 
+function renderMessageText(text: string) {
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    parts.push(
+      <a
+        key={`message-link-${match.index}`}
+        href={match[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {match[1]}
+      </a>
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
+}
+
+type MostAskedItem = {
+  question: string;
+  count: number;
+  tokens: string[];
+};
+
+const MOST_ASKED_VERSION = 'v3';
+
+const QUESTION_STOP_WORDS = new Set([
+  'a', 'an', 'the', 'is', 'are', 'am', 'to', 'of', 'for', 'in', 'on', 'at',
+  'and', 'or', 'can', 'could', 'would', 'should', 'do', 'does', 'did', 'how',
+  'what', 'which', 'where', 'when', 'why', 'tell', 'me', 'about', 'please',
+  'justtap', 'hi', 'hello', 'hey',
+  'क्या', 'कैसे', 'कैसी', 'कहाँ', 'कहां', 'मुझे', 'मेरा', 'मेरी', 'आपका',
+  'से', 'के', 'की', 'है', 'हैं', 'हो', 'कर', 'करें', 'बताएं', 'बताइए', 'बारे',
+  'में', 'और', 'या', 'कृपया', 'मेरा', 'मेरे', 'हम', 'आप',
+]);
+
+function questionTokens(question: string): string[] {
+  return question
+    .toLocaleLowerCase()
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .split(/\s+/)
+    .filter(token => token && !QUESTION_STOP_WORDS.has(token));
+}
+
+function questionSimilarity(a: string[], b: string[]): number {
+  if (!a.length || !b.length) return 0;
+  const left = new Set(a);
+  const right = new Set(b);
+  let intersection = 0;
+  left.forEach(token => {
+    if (right.has(token)) intersection += 1;
+  });
+  return intersection / (left.size + right.size - intersection);
+}
+
+function mostAskedKey(lang: Lang): string {
+  return `justtap_most_asked_${MOST_ASKED_VERSION}_${lang}`;
+}
+
+function readMostAsked(lang: Lang): MostAskedItem[] {
+  try {
+    const raw = localStorage.getItem(mostAskedKey(lang));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      item =>
+        item &&
+        typeof item.question === 'string' &&
+        typeof item.count === 'number' &&
+        Array.isArray(item.tokens)
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writeMostAsked(lang: Lang, items: MostAskedItem[]) {
+  try {
+    localStorage.setItem(mostAskedKey(lang), JSON.stringify(items));
+  } catch {
+    // Chat still works if local storage is unavailable/full.
+  }
+}
+
+function addMostAskedQuestion(lang: Lang, question: string) {
+  const trimmed = question.trim();
+  if (!trimmed || /^(?:yes|no|हाँ|नहीं)$/iu.test(trimmed)) return;
+
+  const tokens = questionTokens(trimmed);
+  if (!tokens.length) return;
+
+  const items = readMostAsked(lang);
+  let bestIndex = -1;
+  let bestScore = 0;
+
+  items.forEach((item, index) => {
+    const score = questionSimilarity(tokens, item.tokens);
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = index;
+    }
+  });
+
+  if (bestIndex >= 0 && bestScore >= 0.5) {
+    items[bestIndex] = {
+      ...items[bestIndex],
+      count: items[bestIndex].count + 1,
+    };
+  } else {
+    items.push({ question: trimmed, count: 1, tokens });
+  }
+
+  items.sort((a, b) => b.count - a.count);
+  writeMostAsked(lang, items.slice(0, 50));
+}
+
+const LEGACY_DEMO_QUESTIONS = new Set([
+  'how to it charge for service',
+  'payment issue',
+  'good morning',
+]);
+
+// These are first-visit examples only. They are never written to the
+// most-asked store and are replaced by real user questions as soon as
+// the user starts asking questions in that language.
+const FIRST_VISIT_QUESTIONS: Record<Lang, string[]> = {
+  en: [
+    'What services does JustTap provide?',
+    'How can I book a service?',
+    'How can I cancel a booking?',
+  ],
+  hi: [
+    'JustTap कौन-कौन सी सेवाएँ देता है?',
+    'मैं सेवा कैसे बुक कर सकता हूँ?',
+    'मैं बुकिंग कैसे रद्द कर सकता हूँ?',
+  ],
+};
+
+function getMostAskedDisplay(lang: Lang): MostAskedItem[] {
+  const real = readMostAsked(lang).slice(0, 3);
+  if (real.length > 0) return real;
+
+  return FIRST_VISIT_QUESTIONS[lang].map(question => ({
+    question,
+    count: 0,
+    tokens: questionTokens(question),
+  }));
+}
+
+function isFirstVisitExample(lang: Lang, question: string): boolean {
+  const normalized = question.trim().toLocaleLowerCase();
+  return FIRST_VISIT_QUESTIONS[lang].some(
+    example => example.toLocaleLowerCase() === normalized
+  );
+}
+
+function rebuildMostAskedFromMessages(lang: Lang, storedMessages: any[]) {
+  const items: MostAskedItem[] = [];
+
+  storedMessages
+    .filter(message => message?.role === 'user' && typeof message.text === 'string')
+    .map(message => message.text.trim())
+    .filter(question => question && !LEGACY_DEMO_QUESTIONS.has(question.toLocaleLowerCase()))
+    .forEach(question => {
+      const tokens = questionTokens(question);
+      if (!tokens.length) return;
+
+      let bestIndex = -1;
+      let bestScore = 0;
+      items.forEach((item, index) => {
+        const score = questionSimilarity(tokens, item.tokens);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
+
+      if (bestIndex >= 0 && bestScore >= 0.5) {
+        items[bestIndex] = {
+          ...items[bestIndex],
+          count: items[bestIndex].count + 1,
+        };
+      } else {
+        items.push({ question, count: 1, tokens });
+      }
+    });
+
+  items.sort((a, b) => b.count - a.count);
+  const result = items.slice(0, 50);
+  writeMostAsked(lang, result);
+  return result;
+}
+
 function ChatbotPanel({
   onClose
 }: {
@@ -351,6 +560,14 @@ function ChatbotPanel({
   const [feedback, setFeedback] =
     useState<Record<number, 'up' | 'down'>>({});
 
+  const [mostAskedQuestions, setMostAskedQuestions] =
+    useState<MostAskedItem[]>([]);
+
+  // Top 3 is shown when the chatbot panel is opened/reopened, not while
+  // the user is actively chatting. It does not alter the Top 3 data.
+  const [showMostAskedQuestions, setShowMostAskedQuestions] =
+    useState<Record<Lang, boolean>>({ en: true, hi: true });
+
   const t = T[lang];
 
   useEffect(() => {
@@ -373,6 +590,15 @@ function ChatbotPanel({
     // the message list, so a fresh thread simply starts empty.
     const nextSessionId = getSessionForLang(lang);
     const stored = getStoredMessages(nextSessionId);
+    const rebuiltMostAsked = rebuildMostAskedFromMessages(lang, stored);
+    const storedTop = rebuiltMostAsked.length > 0
+      ? rebuiltMostAsked
+      : readMostAsked(lang);
+    setMostAskedQuestions(
+      storedTop.length > 0
+        ? storedTop.slice(0, 3)
+        : getMostAskedDisplay(lang)
+    );
 
     setSessionId(nextSessionId);
     setMessages(stored);
@@ -441,6 +667,11 @@ function ChatbotPanel({
     setIsThinking(false);
     setStreamingId(null);
     setFeedback({});
+    setMostAskedQuestions(getMostAskedDisplay(lang));
+    setShowMostAskedQuestions(current => ({
+      ...current,
+      [lang]: false
+    }));
   };
 
   const saveChatToFile = () => {
@@ -513,13 +744,39 @@ function ChatbotPanel({
   };
 
   const ask = async (
-    text = input
+    text = input,
+    fromFirstVisitExample = false
   ) => {
     const q = text.trim();
 
     if (!q) return;
 
+    // First-visit example questions are navigation examples, not real
+    // customer behavior. They must never enter the most-asked counts.
+    if (!fromFirstVisitExample) {
+      addMostAskedQuestion(lang, q);
+      const updated = readMostAsked(lang).slice(0, 3);
+      setMostAskedQuestions(
+        updated.length > 0
+          ? updated
+          : getMostAskedDisplay(lang)
+      );
+    } else {
+      // A first-visit example is already shown as a user message in the
+      // chat after it is clicked, so remove that example from the Top 3
+      // list instead of displaying the same question in both places.
+      setMostAskedQuestions(current =>
+        current.filter(item => item.question.trim() !== q)
+      );
+    }
+
     setInput('');
+    // Top 3 is a re-entry/landing panel. Once the user starts chatting,
+    // hide it so the same question is not duplicated above the live chat.
+    setShowMostAskedQuestions(current => ({
+      ...current,
+      [lang]: false
+    }));
 
     // Sending a message means the customer wants to see it (and the
     // reply that follows) right away — jump to the latest message even
@@ -908,6 +1165,35 @@ function ChatbotPanel({
           </div>
         </div>
 
+        {showMostAskedQuestions[lang] && (
+          <section className="most-asked" aria-label={t.mostAsked}>
+            <div className="most-asked-head">
+              <span className="most-asked-title">{t.mostAsked}</span>
+              <span className="most-asked-badge">TOP 3</span>
+            </div>
+
+            <div className="most-asked-list">
+              {mostAskedQuestions.map((item, index) => (
+                <button
+                  key={`${item.question}-${index}`}
+                  type="button"
+                  className="most-asked-item"
+                  onClick={() =>
+                    void ask(
+                      item.question,
+                      item.count === 0 && isFirstVisitExample(lang, item.question)
+                    )
+                  }
+                >
+                  <span className="most-asked-number">{index + 1}</span>
+                  <span className="most-asked-question">{item.question}</span>
+                  <span className="most-asked-arrow">›</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div
           className="messages"
           ref={messagesRef}
@@ -935,7 +1221,9 @@ function ChatbotPanel({
                       `bubble ${message.role}`
                     }
                   >
-                    {message.text}
+                    {message.role === 'bot'
+                      ? renderMessageText(message.text)
+                      : message.text}
                     {message.id === streamingId && (
                       <span className="stream-caret" />
                     )}
