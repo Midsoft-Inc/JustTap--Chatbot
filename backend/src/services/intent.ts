@@ -27,7 +27,7 @@ const rules: Rule[] = [
   // GENERAL
   // =========================================================
 
-    {
+  {
     intent: 'greeting',
     category: 'general',
     re: /^(hi|hello|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
@@ -42,13 +42,13 @@ const rules: Rule[] = [
   {
     intent: 'goodbye',
     category: 'general',
-    re: /(?:bye|goodbye|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
+    re: /(?:bye|goodbye|good by|g b|good byyy|good beyy|good byyyy|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
   },
 
   {
     intent: 'help',
     category: 'general',
-    re: /(?:help|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
+    re: /(?:help|can\s+ you\s+ help\s+ me|can\s+you\s+help\s+me|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
   },
 
   {
