@@ -9,6 +9,7 @@ import { getRecentTurns, getConversationLanguage, MemoryTurn } from './memory.js
 import { getCachedAnswer } from './cache.js';
 import { isContentless, stripEmoji, normalizeDomainQuery } from './textSignal.js';
 import { SearchHit } from '../models/types.js';
+import { classifyIntent } from '../services/intent.js';
 
 export type OrchestratorInput = {
   sessionId: string;
@@ -95,10 +96,10 @@ const languageStep = RunnableLambda.from(async (input: OrchestratorInput) => {
   // are only fallbacks for the (currently rare, since the frontend always
   // sends a toggle value) case where no explicit responseLanguage arrives.
   const responseLanguage =
-  inputLanguage ||
-  input.responseLanguage?.trim().toLowerCase() ||
-  storedConversationLanguage ||
-  'en';
+    input.responseLanguage?.trim().toLowerCase() ||
+    inputLanguage ||
+    storedConversationLanguage ||
+    'en';
 
   return { ...input, language: inputLanguage, responseLanguage, normalizedMessage, history };
 });
@@ -159,6 +160,28 @@ const routeStep = RunnableLambda.from(
 
     if (semantic.supportIssue) {
       return { language: responseLanguage, normalizedMessage, semantic, stage: 'support_issue' };
+    }
+
+    // There is no generic booking KB record. Once semantic analysis confirms
+    // that the current question names no service, answer the generic booking
+    // question directly instead of allowing RAG to select an arbitrary
+    // service-specific record such as CA.
+    if (semantic.intent === 'how_to_book' && !semantic.service) {
+      const genericBookingReplies: Record<string, string> = {
+        en: 'To book a service, open the Services section in the JustTap application, select the service you need, and follow the booking instructions shown there.\n\nLearn More',
+        hi: 'सेवा बुक करने के लिए JustTap application में Services section खोलें, अपनी आवश्यक सेवा चुनें और वहाँ दिए गए booking instructions का पालन करें।\n\nLearn More',
+        mr: 'सेवा बुक करण्यासाठी JustTap application मधील Services section उघडा, तुम्हाला आवश्यक असलेली सेवा निवडा आणि तेथे दिलेल्या booking instructions चे पालन करा.\n\nLearn More'
+      };
+
+      return {
+        language: responseLanguage,
+        normalizedMessage,
+        semantic,
+        stage: 'grounded',
+        answer: genericBookingReplies[responseLanguage] ?? genericBookingReplies.en,
+        hits: [],
+        topScore: 1
+      };
     }
 
     if (semantic.conversationState === 'needs_clarification') {
@@ -254,8 +277,14 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
   // book a plumber"). Only grounded-stage answers are ever cached (see
   // cache.ts), so this can never return a stale ticket ID or a
   // conversation-state-dependent clarification.
+  const deterministicIntent = classifyIntent(afterLanguage.normalizedMessage);
+  const isGenericBookingCandidate =
+    deterministicIntent.intent === 'how_to_book';
+
   const tCache = Date.now();
-  const cached = await getCachedAnswer(afterLanguage.normalizedMessage, afterLanguage.responseLanguage);
+  const cached = isGenericBookingCandidate
+    ? null
+    : await getCachedAnswer(afterLanguage.normalizedMessage, afterLanguage.responseLanguage);
   const cacheMs = Date.now() - tCache;
 
   if (cached) {

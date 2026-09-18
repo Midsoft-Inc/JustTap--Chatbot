@@ -135,6 +135,23 @@ const semanticStep = RunnableLambda.from(
       /\b(?:book|hire|find|get|repair|fix)\b/i.test(s) ||
       /(?:मुझे|चाहिए|बुक|करवाना|करना है|हवी|बुक करायची)/u.test(s);
 
+    // A generic booking question such as "How can I book a service?" must
+    // not inherit an arbitrary service discovered from generic booking words.
+    // Only treat the discovered service as explicit when its canonical name
+    // is actually present in the current normalized question.
+    const normalizedWords = s
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean);
+    const discoveredServiceWords = discovered
+      ? discovered.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+      : [];
+
+    const explicitServiceMentioned =
+      discoveredServiceWords.length > 0 &&
+      discoveredServiceWords.every((word) => normalizedWords.includes(word));
+
+
     const problemWithoutAction =
       /\b(?:car|vehicle|auto)\b/i.test(s) &&
       /\b(?:damage|damaged|broken|breakdown|broke|stopped|not working|problem|issue|accident)\b/i.test(s) &&
@@ -162,7 +179,11 @@ const semanticStep = RunnableLambda.from(
     // regex classifier did not match the exact wording. Resolve the service
     // from the real KB and route it as service_booking. Do not let the LLM
     // turn this into unknown_query.
-    if (discovered && explicitServiceRequest) {
+    if (
+      discovered &&
+      explicitServiceRequest &&
+      (rule.intent !== 'how_to_book' || explicitServiceMentioned)
+    ) {
       return {
         input,
         rule,
@@ -233,7 +254,11 @@ ${input.message}`.trim();
       understood = parseLlmJson(await generate(prompt, 'en'));
     } catch {}
 
-    if (discovered) {
+    if (
+      discovered &&
+      explicitServiceRequest &&
+      (rule.intent !== 'how_to_book' || explicitServiceMentioned)
+    ) {
       if (understood) {
         understood.service = discovered;
         if (['unknown_query', 'how_to_book', 'knowledge'].includes(understood.intent)) {
@@ -249,6 +274,17 @@ ${input.message}`.trim();
           conversationState: 'complete'
         };
       }
+    } else if (rule.intent === 'how_to_book' && !explicitServiceMentioned) {
+      // The deterministic generic-booking rule is authoritative here.
+      // Do not let semantic discovery/LLM inference attach an arbitrary
+      // service such as CA to a question that names no service.
+      understood = {
+        intent: 'how_to_book',
+        service: null,
+        entities: {},
+        confidence: 0.99,
+        conversationState: 'complete'
+      };
     }
 
     return { input, rule, understood };
