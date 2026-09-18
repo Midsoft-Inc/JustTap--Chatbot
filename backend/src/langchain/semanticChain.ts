@@ -125,7 +125,52 @@ const semanticStep = RunnableLambda.from(
     let discovered: string | null = null;
     try {
       catalog = await getKnownServices();
-      discovered = await discoverServiceFromKnowledge(s);
+
+      // For a generic "how to book" question, do not use knowledge discovery
+      // to guess a service. Discovery may return an arbitrary service for
+      // generic booking words such as "book" or "service".
+      //
+      // Resolve a service for this intent only when the canonical service name
+      // is explicitly present in the customer's current message.
+      if (rule.intent === 'how_to_book') {
+        const normalizedWords = new Set(
+          s
+            .toLowerCase()
+            .split(/[^\\p{L}\\p{N}]+/u)
+            .filter(Boolean)
+        );
+
+        const explicitlyMentionedService =
+          catalog.find(({ service }) => {
+            const serviceWords = service
+              .toLowerCase()
+              .split(/[^\\p{L}\\p{N}]+/u)
+              .filter(Boolean);
+
+            return (
+              serviceWords.length > 0 &&
+              serviceWords.every((word) => normalizedWords.has(word))
+            );
+          })?.service ?? null;
+
+        if (!explicitlyMentionedService) {
+          return {
+            input,
+            rule,
+            understood: {
+              intent: 'how_to_book',
+              service: null,
+              entities: {},
+              confidence: 0.99,
+              conversationState: 'complete'
+            } as LlmUnderstanding
+          };
+        }
+
+        discovered = explicitlyMentionedService;
+      } else {
+        discovered = await discoverServiceFromKnowledge(s);
+      }
     } catch (error) {
       console.warn('[SEMANTIC] Service discovery failed:', error);
     }
