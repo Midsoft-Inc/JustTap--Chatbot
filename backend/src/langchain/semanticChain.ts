@@ -126,12 +126,8 @@ const semanticStep = RunnableLambda.from(
     try {
       catalog = await getKnownServices();
 
-      // For a generic "how to book" question, do not use knowledge discovery
-      // to guess a service. Discovery may return an arbitrary service for
-      // generic booking words such as "book" or "service".
-      //
-      // Resolve a service for this intent only when the canonical service name
-      // is explicitly present in the customer's current message.
+      // Booking service resolution is deterministic and KB-bound.
+      // Never let semantic discovery or the LLM invent a service.
       if (rule.intent === 'how_to_book') {
         const normalizedWords = new Set(
           s
@@ -140,40 +136,47 @@ const semanticStep = RunnableLambda.from(
             .filter(Boolean)
         );
 
-        const explicitlyMentionedServices = catalog
-          .map(({ service }) => {
-            const serviceWords = service
-              .toLowerCase()
-              .split(/[^\p{L}\p{N}]+/u)
-              .filter(Boolean);
+        const tokenize = (value: string): string[] =>
+          value
+            .toLowerCase()
+            .split(/[^\p{L}\p{N}]+/u)
+            .filter(Boolean);
 
-            return serviceWords.length > 0 &&
-              serviceWords.every((word) => normalizedWords.has(word))
-              ? service
+        // Match a canonical service when either its complete name is present
+        // or a distinctive service token is present. This handles:
+        //   "book plumber"       -> Plumber
+        //   "book painter"       -> Painter
+        //   "book mechanic"      -> Bike Mechanic + Car Mechanic
+        // while keeping generic "book a service" generic.
+        const serviceMatches = catalog
+          .map(({ service }) => {
+            const serviceWords = tokenize(service);
+            if (!serviceWords.length) return null;
+
+            const allWordsPresent = serviceWords.every((word) => normalizedWords.has(word));
+            if (allWordsPresent) return { service, score: serviceWords.length + 10 };
+
+            const distinctiveMatches = serviceWords.filter((word) =>
+              normalizedWords.has(word) && !['service', 'services'].includes(word)
+            ).length;
+
+            return distinctiveMatches > 0
+              ? { service, score: distinctiveMatches }
               : null;
           })
-          .filter((service): service is string => Boolean(service));
+          .filter((item): item is { service: string; score: number } => Boolean(item));
 
-        if (explicitlyMentionedServices.length === 0) {
-          // No service name was explicitly present. Keep the generic booking
-          // flow authoritative; never let RAG/LLM discovery guess a service.
-          return {
-            input,
-            rule,
-            understood: {
-              intent: 'how_to_book',
-              service: null,
-              entities: {},
-              confidence: 0.99,
-              conversationState: 'complete'
-            } as LlmUnderstanding
-          };
-        }
+        const maxScore = serviceMatches.length
+          ? Math.max(...serviceMatches.map((item) => item.score))
+          : 0;
 
-        if (explicitlyMentionedServices.length > 1) {
-          // Example: "I want to book mechanic" matches both Bike Mechanic and
-          // Car Mechanic. Do not choose one arbitrarily. Ask the user to
-          // specify which canonical service they want.
+        const explicitlyMentionedServices = serviceMatches
+          .filter((item) => item.score === maxScore)
+          .map((item) => item.service);
+
+        if (explicitlyMentionedServices.length === 1 && maxScore > 0) {
+          discovered = explicitlyMentionedServices[0];
+        } else if (explicitlyMentionedServices.length > 1) {
           return {
             input,
             rule,
@@ -187,9 +190,52 @@ const semanticStep = RunnableLambda.from(
               conversationState: 'needs_clarification'
             } as LlmUnderstanding
           };
-        }
+        } else {
+          // If the customer supplied a booking target that is not in the KB,
+          // do not turn it into generic booking and do not invent a service.
+          const bookingTargetWords = s
+            .toLowerCase()
+            .split(/[^\p{L}\p{N}]+/u)
+            .filter(Boolean)
+            .filter((word) =>
+              !new Set([
+                'i', 'we', 'want', 'need', 'would', 'like', 'can', 'could',
+                'how', 'what', 'to', 'a', 'an', 'the', 'me', 'my', 'for',
+                'please', 'book', 'booking', 'service', 'services', 'justtap',
+                'app', 'application', 'in', 'on', 'from', 'get', 'hire',
+                'find', 'do', 'you', 'is', 'it', 'this', 'that'
+              ]).has(word)
+            );
 
-        discovered = explicitlyMentionedServices[0];
+          if (bookingTargetWords.length > 0) {
+            return {
+              input,
+              rule,
+              understood: {
+                intent: 'how_to_book',
+                service: null,
+                entities: {
+                  unknown_service: bookingTargetWords.join(' ')
+                },
+                confidence: 0.99,
+                conversationState: 'needs_clarification'
+              } as LlmUnderstanding
+            };
+          }
+
+          // No service target at all: keep the generic booking flow.
+          return {
+            input,
+            rule,
+            understood: {
+              intent: 'how_to_book',
+              service: null,
+              entities: {},
+              confidence: 0.99,
+              conversationState: 'complete'
+            } as LlmUnderstanding
+          };
+        }
       } else {
         discovered = await discoverServiceFromKnowledge(s);
       }

@@ -162,6 +162,51 @@ const routeStep = RunnableLambda.from(
       return { language: responseLanguage, normalizedMessage, semantic, stage: 'support_issue' };
     }
 
+    if (semantic.conversationState === 'needs_clarification') {
+      const serviceOptions = semantic.entities?.service_options;
+      const unknownService = semantic.entities?.unknown_service;
+
+      if (serviceOptions) {
+        const clarificationReplies: Record<string, string> = {
+          en: `Which mechanic service would you like to book: ${serviceOptions.replaceAll(' | ', ' or ')}?`,
+          hi: `आप कौन-सी mechanic service बुक करना चाहते हैं: ${serviceOptions.replaceAll(' | ', ' या ')}?`,
+          mr: `तुम्हाला कोणती mechanic service बुक करायची आहे: ${serviceOptions.replaceAll(' | ', ' किंवा ')}?`
+        };
+
+        return {
+          language: responseLanguage,
+          normalizedMessage,
+          semantic,
+          stage: 'clarification',
+          answer: clarificationReplies[responseLanguage] ?? clarificationReplies.en
+        };
+      }
+
+      if (unknownService) {
+        const unknownServiceReplies: Record<string, string> = {
+          en: `I couldn't find "${unknownService}" as a JustTap service. Please choose a service from the available JustTap services.`,
+          hi: `मुझे JustTap में "${unknownService}" नाम की कोई सेवा नहीं मिली। कृपया उपलब्ध JustTap सेवाओं में से कोई सेवा चुनें।`,
+          mr: `JustTap मध्ये "${unknownService}" नावाची सेवा मला सापडली नाही. कृपया उपलब्ध JustTap सेवांपैकी एखादी सेवा निवडा.`
+        };
+
+        return {
+          language: responseLanguage,
+          normalizedMessage,
+          semantic,
+          stage: 'clarification',
+          answer: unknownServiceReplies[responseLanguage] ?? unknownServiceReplies.en
+        };
+      }
+
+      return {
+        language: responseLanguage,
+        normalizedMessage,
+        semantic,
+        stage: 'clarification',
+        answer: CLARIFICATION_REPLIES[responseLanguage] ?? CLARIFICATION_REPLIES.en
+      };
+    }
+
     // There is no generic booking KB record. Once semantic analysis confirms
     // that the current question names no service, answer the generic booking
     // question directly instead of allowing RAG to select an arbitrary
@@ -181,34 +226,6 @@ const routeStep = RunnableLambda.from(
         answer: genericBookingReplies[responseLanguage] ?? genericBookingReplies.en,
         hits: [],
         topScore: 1
-      };
-    }
-
-    if (semantic.conversationState === 'needs_clarification') {
-      const serviceOptions = semantic.entities?.service_options;
-
-      if (serviceOptions) {
-        const clarificationReplies: Record<string, string> = {
-          en: `Which mechanic service would you like to book: ${serviceOptions.replaceAll(' | ', ' or ')}?`,
-          hi: `आप कौन-सी mechanic service बुक करना चाहते हैं: ${serviceOptions.replaceAll(' | ', ' या ')}?`,
-          mr: `तुम्हाला कोणती mechanic service बुक करायची आहे: ${serviceOptions.replaceAll(' | ', ' किंवा ')}?`
-        };
-
-        return {
-          language: responseLanguage,
-          normalizedMessage,
-          semantic,
-          stage: 'clarification',
-          answer: clarificationReplies[responseLanguage] ?? clarificationReplies.en
-        };
-      }
-
-      return {
-        language: responseLanguage,
-        normalizedMessage,
-        semantic,
-        stage: 'clarification',
-        answer: CLARIFICATION_REPLIES[responseLanguage] ?? CLARIFICATION_REPLIES.en
       };
     }
 
