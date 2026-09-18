@@ -127,7 +127,29 @@ Important:
 
 `.trim();
 
-    return generate(prompt, input.language);
+    const answer = await generate(prompt, input.language);
+
+    // Force "Learn More" to be a real Markdown link.
+    const learnMorePattern = /learn\s*more(?:\s*[-:])?/i;
+    const needsLearnMore =
+      /service|book|booking|cancel|cancellation|price|pricing/i.test(
+        `${input.intent} ${input.normalizedMessage}`
+      );
+
+    if (needsLearnMore) {
+      if (learnMorePattern.test(answer)) {
+        return answer.replace(
+          learnMorePattern,
+          '[Learn More](https://www.justtapnow.com/about)'
+        );
+      }
+
+      return `${answer.trim()}
+
+[Learn More](https://www.justtapnow.com/about)`;
+    }
+
+    return answer;
   }
 
   // No sufficiently specific KB record. Use a deterministic safe response

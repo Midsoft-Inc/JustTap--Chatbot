@@ -271,7 +271,8 @@ function Mascot({
 }
 
 function renderMessageText(text: string) {
-  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const learnMoreUrl = 'https://www.justtapnow.com/about';
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\bLearn More\b(?:\s*[-:–—]?\s*(https?:\/\/[^\s)]+))?/gi;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -281,14 +282,23 @@ function renderMessageText(text: string) {
       parts.push(text.slice(lastIndex, match.index));
     }
 
+    const label = match[1] ?? 'Learn More';
+    const href = match[2] ?? match[3] ?? learnMoreUrl;
+
     parts.push(
       <a
         key={`message-link-${match.index}`}
-        href={match[2]}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
+        style={{
+          pointerEvents: 'auto',
+          cursor: 'pointer',
+          position: 'relative',
+          zIndex: 1
+        }}
       >
-        {match[1]}
+        {label}
       </a>
     );
 
