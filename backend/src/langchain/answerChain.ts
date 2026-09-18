@@ -1,5 +1,5 @@
-
 import { generate } from '../services/huggingface.js';
+
 import { SearchHit } from '../models/types.js';
 
 export type GroundedAnswerInput = {
@@ -13,9 +13,12 @@ export type GroundedAnswerInput = {
   minRelevanceScore: number;
 };
 
-
-export async function runAnswerChain(input: GroundedAnswerInput): Promise<string> {
-  const strongMatch = input.hits.length > 0 && input.topScore >= input.minRelevanceScore;
+export async function runAnswerChain(
+  input: GroundedAnswerInput
+): Promise<string> {
+  const strongMatch =
+    input.hits.length > 0 &&
+    input.topScore >= input.minRelevanceScore;
 
   if (strongMatch) {
     const context = input.hits
@@ -25,7 +28,7 @@ export async function runAnswerChain(input: GroundedAnswerInput): Promise<string
       )
       .join('\n');
 
-  const prompt = `
+    const prompt = `
 Detected language: ${input.language}
 
 User intent: ${input.intent}
@@ -55,7 +58,6 @@ Important:
 - Do not omit relevant information from the supplied knowledge context.
 - Do not change the meaning of the supplied knowledge context.
 - Do not say that a service is unavailable unless the knowledge context explicitly states that it is unavailable.
-
 - Answer entirely in the requested response language.
 - For Hindi responses, write explanatory sentences in Hindi script.
 - For Marathi responses, write explanatory sentences in Marathi script.
@@ -63,9 +65,7 @@ Important:
 - Keep "JustTap" unchanged.
 - Keep every service name and category name exactly as provided in the knowledge context.
 - Do not translate, transliterate, rename, shorten, merge, or otherwise modify service names or category names.
-
 - Use the same structured response format for every answer.
-
 
 - Do not use #, ##, ###, or other Markdown heading syntax.
 - After the heading, present the information point-by-point.
@@ -75,7 +75,6 @@ Important:
 - Do not write long blocks of text when the information can be presented as points.
 
 - For a specific service:
-
   - Answer only the user's current request about that service.
   - Provide only information relevant to that service.
   - Present the information point-by-point.
@@ -92,7 +91,12 @@ Important:
   - Answer only the user's booking request for that service.
   - Provide only the booking information supported by the knowledge context.
   - If the knowledge context provides ordered booking steps, use a numbered list.
-  - If the user asks about a service, booking, cancellation, or price, print "Learn More" at the end of the response.
+  - If the user asks about a service, booking, cancellation, or price, include the Learn More link at the end of the response.
+  - For English, the link text must be exactly "Learn More".
+  - For Hindi, the link text must be exactly "लर्न मोर".
+  - Do not use "Learn More" in a Hindi response.
+  - Do not use "लर्न मोर" in an English response.
+  - The Learn More text must not be translated into any other wording.
   - Do not add unsupported booking steps.
   - Do not mention, list, recommend, or append any other service or category unless the user explicitly asks for them.
   - Use numbered lists for services under each category.
@@ -106,6 +110,7 @@ Important:
 - Use numbered lists for services under each category.
 - Include the complete relevant list from the knowledge context.
 - Do not add booking, pricing, cancellation, or unrelated information unless explicitly requested.
+
 - Analyze ONLY the customer's CURRENT question.
 - Do not inherit language, intent, category, or service from previous conversation messages unless the current question explicitly refers to them.
 - Determine the language from the current question itself.
@@ -114,6 +119,7 @@ Important:
 - If the current question is Hindi, detected language must be Hindi.
 - If the current question is Marathi, detected language must be Marathi.
 - Determine intent from what the customer is asking in the CURRENT question.
+
 - For Hindi:
   - Write the explanatory content in Hindi.
   - Keep service names and category names exactly as provided in the knowledge context.
@@ -124,13 +130,25 @@ Important:
 
 - For English:
   - Write the complete response in English.
-
 `.trim();
 
     const answer = await generate(prompt, input.language);
 
-    // Force "Learn More" to be a real Markdown link.
-    const learnMorePattern = /learn\s*more(?:\s*[-:])?/i;
+    // Force the correct localized Learn More link.
+    const responseLanguage =
+      input.language.toLowerCase().split(/[-_]/)[0];
+
+    const learnMoreText =
+      responseLanguage === 'hi'
+        ? 'लर्न मोर'
+        : 'Learn More';
+
+    const learnMoreLink =
+      `[${learnMoreText}](https://www.justtapnow.com/about)`;
+
+    const learnMorePattern =
+      /(?:learn\s+more|लर्न\s+मोर)/i;
+
     const needsLearnMore =
       /service|book|booking|cancel|cancellation|price|pricing/i.test(
         `${input.intent} ${input.normalizedMessage}`
@@ -140,13 +158,13 @@ Important:
       if (learnMorePattern.test(answer)) {
         return answer.replace(
           learnMorePattern,
-          '[Learn More](https://www.justtapnow.com/about)'
+          learnMoreLink
         );
       }
 
       return `${answer.trim()}
 
-[Learn More](https://www.justtapnow.com/about)`;
+${learnMoreLink}`;
     }
 
     return answer;
@@ -166,6 +184,7 @@ Important:
   // The rule below is now restrictive by default: for anything not on
   // this specific list, the model must say it doesn't have exact
   // information rather than describe steps it has no source for.
+
   const safeFallbacks: Record<string, string> = {
     en: "I don't have exact information about that JustTap topic yet. The JustTap support team can help you with the exact details.",
     hi: "मेरे पास अभी इस JustTap विषय की सटीक जानकारी नहीं है। JustTap की सहायता टीम आपको सही जानकारी देने में मदद कर सकती है।",
@@ -174,7 +193,13 @@ Important:
 
   // These are the only generic instructions we can safely provide without
   // a matching KB record. They contain no invented product details.
-  if (input.intent === 'knowledge' && /login|account|password|credential/i.test(input.normalizedMessage)) {
+
+  if (
+    input.intent === 'knowledge' &&
+    /login|account|password|credential/i.test(
+      input.normalizedMessage
+    )
+  ) {
     return safeFallbacks[input.language] ?? safeFallbacks.en;
   }
 
