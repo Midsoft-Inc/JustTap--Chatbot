@@ -85,6 +85,21 @@ function parseLlmJson(text: string): LlmUnderstanding | null {
   }
 }
 
+function canonicalServiceFromCatalog(value: string | null, catalog: Array<{ service: string; keywords: string[] }>): string | null {
+  if (!value?.trim()) return null;
+  const normalized = value.trim().toLowerCase();
+  return catalog.find((item) => item.service.trim().toLowerCase() === normalized)?.service ?? null;
+}
+
+function canonicalServiceExplicitlyMentioned(value: string | null, message: string): boolean {
+  if (!value?.trim()) return false;
+  const queryWords = new Set(
+    message.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+  );
+  const serviceWords = value.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return serviceWords.length > 0 && serviceWords.every((word) => queryWords.has(word));
+}
+
 const deterministicStep = RunnableLambda.from(async (input: SemanticInput) => {
   const rule: IntentResult = classifyIntent(input.normalizedMessage);
   return { input, rule };
@@ -115,6 +130,22 @@ const semanticStep = RunnableLambda.from(
           intent: 'knowledge',
           service: null,
           entities: { topic: 'login', action: 'login to JustTap' },
+          confidence: 0.99,
+          conversationState: 'complete'
+        } as LlmUnderstanding
+      };
+    }
+
+    // Service overview is a deterministic KB intent. Do not ask the LLM to
+    // invent or select individual services for a complete overview request.
+    if (rule.intent === 'service_overview' || rule.intent === 'justtap_services') {
+      return {
+        input,
+        rule,
+        understood: {
+          intent: 'service_overview',
+          service: null,
+          entities: {},
           confidence: 0.99,
           conversationState: 'complete'
         } as LlmUnderstanding
@@ -367,30 +398,34 @@ ${input.message}`.trim();
       understood = parseLlmJson(await generate(prompt, 'en'));
     } catch {}
 
-    if (
-      discovered &&
-      explicitServiceRequest &&
-      (rule.intent !== 'how_to_book' || explicitServiceMentioned)
-    ) {
-      if (understood) {
+    // The LLM is never authoritative for service identity. If it returns a
+    // service, accept it only when that exact canonical service exists in the
+    // JustTap catalogue. For booking requests, the service must also be
+    // explicitly supported by the current question.
+    if (understood) {
+      const llmCanonicalService = canonicalServiceFromCatalog(understood.service, catalog);
+      const bookingIntent =
+        understood.intent === 'service_booking' ||
+        understood.intent === 'how_to_book' ||
+        rule.intent === 'how_to_book';
+
+      if (bookingIntent && llmCanonicalService && !canonicalServiceExplicitlyMentioned(llmCanonicalService, s)) {
+        understood.service = null;
+      } else {
+        understood.service = llmCanonicalService;
+      }
+
+      if (discovered && explicitServiceRequest && canonicalServiceExplicitlyMentioned(discovered, s)) {
         understood.service = discovered;
         if (['unknown_query', 'how_to_book', 'knowledge'].includes(understood.intent)) {
           understood.intent = 'service_booking';
         }
         understood.confidence = Math.max(understood.confidence, 0.9);
-      } else {
-        understood = {
-          intent: 'service_booking',
-          service: discovered,
-          entities: {},
-          confidence: 0.9,
-          conversationState: 'complete'
-        };
       }
-    } else if (rule.intent === 'how_to_book' && !explicitServiceMentioned) {
-      // The deterministic generic-booking rule is authoritative here.
-      // Do not let semantic discovery/LLM inference attach an arbitrary
-      // service such as CA to a question that names no service.
+    }
+
+    // Deterministic generic-booking behavior is authoritative.
+    if (rule.intent === 'how_to_book' && !canonicalServiceExplicitlyMentioned(discovered, s)) {
       understood = {
         intent: 'how_to_book',
         service: null,
@@ -399,7 +434,6 @@ ${input.message}`.trim();
         conversationState: 'complete'
       };
     }
-
     return { input, rule, understood };
   }
 );

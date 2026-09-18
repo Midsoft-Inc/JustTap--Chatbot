@@ -10,6 +10,7 @@ import { getCachedAnswer } from './cache.js';
 import { isContentless, stripEmoji, normalizeDomainQuery } from './textSignal.js';
 import { SearchHit } from '../models/types.js';
 import { classifyIntent } from '../services/intent.js';
+import { env } from '../config/env.js';
 
 export type OrchestratorInput = {
   sessionId: string;
@@ -264,6 +265,27 @@ const routeStep = RunnableLambda.from(
 
     const hits = await runRagChain({ query: retrievalQuery, entities: semantic.entities });
     const topScore = hits[0]?.score ?? 0;
+
+    // Hard grounding gate: do not send weak or empty retrieval results to
+    // the LLM. A low-confidence retrieval result is not evidence.
+    const minRelevanceScore = Number(env.MIN_RELEVANCE_SCORE ?? 0.52);
+    if (!hits.length || topScore < minRelevanceScore) {
+      const groundedFallbacks: Record<string, string> = {
+        hi: 'मुझे इस जानकारी का उत्तर JustTap की उपलब्ध जानकारी में नहीं मिला।\n\nLearn More',
+        mr: 'ही माहिती JustTap च्या उपलब्ध माहितीत सापडली नाही.\n\nLearn More',
+        en: 'I could not find this information in the available JustTap information.\n\nLearn More'
+      };
+
+      return {
+        language: responseLanguage,
+        normalizedMessage,
+        semantic,
+        stage: 'grounded',
+        answer: groundedFallbacks[responseLanguage] ?? groundedFallbacks.en,
+        hits,
+        topScore
+      };
+    }
 
     return { language: responseLanguage, normalizedMessage, semantic, stage: 'grounded', hits, topScore };
   }

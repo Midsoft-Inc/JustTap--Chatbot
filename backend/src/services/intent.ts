@@ -112,11 +112,10 @@ const rules: Rule[] = [
   // BOOKING
   // =========================================================
 
-  {
+ {
     intent: 'how_to_book',
     category: 'booking',
-    re:
-      /(?:\b(?:how\s+to\s+book|how\s+(?:can\s+i|do\s+i)\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
+    re:/(?:\b(?:how\s+to\s+book|how\s+(?:can\s+i|do\s+i)\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
   },
 
   {
