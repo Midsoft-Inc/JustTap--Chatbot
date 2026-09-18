@@ -117,6 +117,7 @@ export async function chat(input: ChatRequest) {
           language,
           intent: semantic.intent,
           category: semantic.category,
+          service: semantic.service,
           hits,
           topScore,
           minRelevanceScore: env.MIN_RELEVANCE_SCORE

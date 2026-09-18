@@ -108,9 +108,16 @@ const languageStep = RunnableLambda.from(async (input: OrchestratorInput) => {
 // Step 3: Semantic LLM Chain -> Intent / Service / Entities -> Conversation State
 const semanticStep = RunnableLambda.from(
   async (state: OrchestratorInput & { language: string; responseLanguage: string; normalizedMessage: string; history: MemoryTurn[] }) => {
+    // Deterministic login guard: inspect BOTH the original current message and
+    // the normalized message. Do not depend on the semantic LLM to recognize
+    // login questions, because an unrecognized login query could otherwise
+    // continue into RAG and receive invented generic login instructions.
+    const loginText = `${state.message} ${state.normalizedMessage}`;
     const loginPattern =
-      /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(state.normalizedMessage) &&
-      /\b(how|can|do|to|help|access|account|kaise|kese|kare|karo|karu|karna|karne)\b/i.test(state.normalizedMessage);
+      /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(loginText) &&
+      /\b(how|can|do|to|help|access|account|password|credential|kaise|kese|kaise|kare|karo|karu|karna|karne)\b/i.test(loginText)
+      || /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(loginText) &&
+         /(कैसे|कैसे करें|लॉगिन|लॉग इन|पासवर्ड|अकाउंट|खाता|करूं|करना|करने|करें)/i.test(loginText);
 
     if (loginPattern) {
       const semantic: SemanticResult = {
@@ -148,6 +155,31 @@ const routeStep = RunnableLambda.from(
     }
   ): Promise<OrchestratorResult> => {
     const { semantic, language, responseLanguage, normalizedMessage } = state;
+
+    // Hard safety guard: if the CURRENT user message is a login question,
+    // never allow it to proceed to service RAG/LLM generation unless there is
+    // an explicitly grounded login record. The current KB does not provide
+    // such instructions, so return the deterministic safe response.
+    const currentText = `${state.message} ${normalizedMessage}`;
+    const isLoginRequest =
+      /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(currentText) ||
+      /(लॉगिन|लॉग इन|पासवर्ड|अकाउंट|खाता)/i.test(currentText);
+
+    if (isLoginRequest) {
+      const loginFallbacks: Record<string, string> = {
+        en: "I don't have exact information about JustTap login yet. The JustTap support team can help you with the exact details.",
+        hi: 'मेरे पास अभी JustTap लॉगिन की सटीक जानकारी नहीं है। JustTap की सहायता टीम आपको सही जानकारी देने में मदद कर सकती है।',
+        mr: 'माझ्याकडे सध्या JustTap लॉगिनची अचूक माहिती नाही. JustTap ची सहाय्य टीम तुम्हाला योग्य माहिती देण्यात मदत करू शकते.'
+      };
+
+      return {
+        language: responseLanguage,
+        normalizedMessage,
+        semantic: { ...semantic, intent: 'login', category: 'account', service: null, supportIssue: false },
+        stage: 'grounded',
+        answer: loginFallbacks[responseLanguage] ?? loginFallbacks.en
+      };
+    }
 
     if (SMALL_TALK_INTENTS.has(semantic.intent)) {
       return {
@@ -215,8 +247,8 @@ const routeStep = RunnableLambda.from(
     if (semantic.intent === 'how_to_book' && !semantic.service) {
       const genericBookingReplies: Record<string, string> = {
         en: 'To book a service, open the Services section in the JustTap application, select the service you need, and follow the booking instructions shown there.\n\nLearn More',
-        hi: 'सेवा बुक करने के लिए JustTap ऐप में Services सेक्शन खोलें, अपनी आवश्यक सेवा चुनें और वहाँ दिए गए बुकिंग निर्देशों का पालन करें।\n\nLearn More',
-        mr: 'सेवा बुक करण्यासाठी JustTap application मधील Services section उघडा, तुम्हाला आवश्यक असलेली सेवा निवडा आणि तेथे दिलेल्या booking instructions चे पालन करा.\n\nLearn More'
+        hi: 'सेवा बुक करने के लिए JustTap ऐप में Services सेक्शन खोलें, अपनी आवश्यक सेवा चुनें और वहाँ दिए गए बुकिंग निर्देशों का पालन करें।\n\n[लर्न मोर](https://www.justtapnow.com/about)',
+        mr: 'सेवा बुक करण्यासाठी JustTap application मधील Services section उघडा, तुम्हाला आवश्यक असलेली सेवा निवडा आणि तेथे दिलेल्या booking instructions चे पालन करा.\n\n[अधिक जाणून घ्या](https://www.justtapnow.com/about)'
       };
 
       return {
@@ -271,9 +303,9 @@ const routeStep = RunnableLambda.from(
     const minRelevanceScore = Number(env.MIN_RELEVANCE_SCORE ?? 0.52);
     if (!hits.length || topScore < minRelevanceScore) {
       const groundedFallbacks: Record<string, string> = {
-        hi: 'मुझे इस जानकारी का उत्तर JustTap की उपलब्ध जानकारी में नहीं मिला।\n\nLearn More',
-        mr: 'ही माहिती JustTap च्या उपलब्ध माहितीत सापडली नाही.\n\nLearn More',
-        en: 'I could not find this information in the available JustTap information.\n\nLearn More'
+        hi: 'मुझे इस जानकारी का उत्तर JustTap की उपलब्ध जानकारी में नहीं मिला।\n\n[लर्न मोर](https://www.justtapnow.com/about)',
+        mr: 'ही माहिती JustTap च्या उपलब्ध माहितीत सापडली नाही.\n\n[अधिक जाणून घ्या](https://www.justtapnow.com/about)',
+        en: 'I could not find this information in the available JustTap information.\n\n[Learn More](https://www.justtapnow.com/about)'
       };
 
       return {
@@ -337,9 +369,12 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
   const deterministicIntent = classifyIntent(afterLanguage.normalizedMessage);
   const isGenericBookingCandidate =
     deterministicIntent.intent === 'how_to_book';
+  const isLoginCandidate =
+    /\b(login|log[ -]?in|sign[ -]?in|signin)\b/i.test(afterLanguage.normalizedMessage) ||
+    /(लॉगिन|लॉग इन|पासवर्ड|अकाउंट|खाता)/i.test(afterLanguage.message);
 
   const tCache = Date.now();
-  const cached = isGenericBookingCandidate
+  const cached = isGenericBookingCandidate || isLoginCandidate
     ? null
     : await getCachedAnswer(afterLanguage.normalizedMessage, afterLanguage.responseLanguage);
   const cacheMs = Date.now() - tCache;
