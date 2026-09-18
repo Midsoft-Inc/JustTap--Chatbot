@@ -185,6 +185,24 @@ const routeStep = RunnableLambda.from(
     }
 
     if (semantic.conversationState === 'needs_clarification') {
+      const serviceOptions = semantic.entities?.service_options;
+
+      if (serviceOptions) {
+        const clarificationReplies: Record<string, string> = {
+          en: `Which mechanic service would you like to book: ${serviceOptions.replaceAll(' | ', ' or ')}?`,
+          hi: `आप कौन-सी mechanic service बुक करना चाहते हैं: ${serviceOptions.replaceAll(' | ', ' या ')}?`,
+          mr: `तुम्हाला कोणती mechanic service बुक करायची आहे: ${serviceOptions.replaceAll(' | ', ' किंवा ')}?`
+        };
+
+        return {
+          language: responseLanguage,
+          normalizedMessage,
+          semantic,
+          stage: 'clarification',
+          answer: clarificationReplies[responseLanguage] ?? clarificationReplies.en
+        };
+      }
+
       return {
         language: responseLanguage,
         normalizedMessage,

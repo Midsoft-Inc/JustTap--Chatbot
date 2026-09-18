@@ -14,14 +14,6 @@ type Rule = {
   supportIssue?: boolean;
 };
 
-/*
- * IMPORTANT:
- * Do not put specific services such as plumber, electrician,
- * carpenter, photographer, etc. here.
- *
- * Services are resolved from the knowledge dataset.
- */
-
 const rules: Rule[] = [
   // =========================================================
   // GENERAL
@@ -30,7 +22,7 @@ const rules: Rule[] = [
   {
     intent: 'greeting',
     category: 'general',
-    re: /^(hi|hello|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
+    re: /^(hi|hello|heyy|heyyy|heey|heeeyy|heeyy|heyyy|heyyy|heyyyy|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
   },
 
   {
@@ -48,13 +40,13 @@ const rules: Rule[] = [
   {
     intent: 'help',
     category: 'general',
-    re: /(?:help|can\s+ you\s+ help\s+ me|can\s+you\s+help\s+me|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
+    re: /(?:help|how\s+can\s+you\s+help\+syou|can\s+ you\s+ help\s+ me|can\s+you\s+help\s+me|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
   },
 
   {
     intent: 'acknowledgement',
     category: 'general',
-    re: /^(?:yes|yeah|yep|yup|yess|yes\s+please|yeah\s+sure|sure|ok|okay|okey|alright|all\s+right|got\s+it|gotcha|understood|i\s+understand|sure\s+thing|of\s+course|definitely|absolutely|correct|right|that's\s+right|sounds\s+good|sounds\s+great|perfect|great|fine|no\s+problem|no\s+issues|that\s+works|works\s+for\s+me|thanks|thank\s+you|ठीक|ठीक\s+है|ठीक\s+आहे|ठीक\s+आहे\s+ना|समजले|समजलं|समजून\s+घेतलं|बरं|बरं\s+आहे|हो|होय|हो\s+नक्की|हो\s+बरोबर|बरोबर|नक्की|नक्कीच|चालेल|धन्यवाद|धन्यवाद\s+तुमचे)$/iu
+    re: /^(?:yes|yeah|yep|yup|yess|ook|oook|okk|okkk|okkk|okkkk|yash|yaha|yess|yesss|yes\s+please|yeah\s+sure|sure|ok|okay|okey|alright|all\s+right|got\s+it|gotcha|understood|i\s+understand|sure\s+thing|of\s+course|definitely|absolutely|correct|right|that's\s+right|sounds\s+good|sounds\s+great|perfect|great|fine|no\s+problem|no\s+issues|that\s+works|works\s+for\s+me|thanks|thank\s+you|ठीक|ठीक\s+है|ठीक\s+आहे|ठीक\s+आहे\s+ना|समजले|समजलं|समजून\s+घेतलं|बरं|बरं\s+आहे|हो|होय|हो\s+नक्की|हो\s+बरोबर|बरोबर|नक्की|नक्कीच|चालेल|धन्यवाद|धन्यवाद\s+तुमचे)$/iu
   },
 
   // =========================================================

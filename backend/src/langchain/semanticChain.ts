@@ -136,24 +136,27 @@ const semanticStep = RunnableLambda.from(
         const normalizedWords = new Set(
           s
             .toLowerCase()
-            .split(/[^\\p{L}\\p{N}]+/u)
+            .split(/[^\p{L}\p{N}]+/u)
             .filter(Boolean)
         );
 
-        const explicitlyMentionedService =
-          catalog.find(({ service }) => {
+        const explicitlyMentionedServices = catalog
+          .map(({ service }) => {
             const serviceWords = service
               .toLowerCase()
-              .split(/[^\\p{L}\\p{N}]+/u)
+              .split(/[^\p{L}\p{N}]+/u)
               .filter(Boolean);
 
-            return (
-              serviceWords.length > 0 &&
+            return serviceWords.length > 0 &&
               serviceWords.every((word) => normalizedWords.has(word))
-            );
-          })?.service ?? null;
+              ? service
+              : null;
+          })
+          .filter((service): service is string => Boolean(service));
 
-        if (!explicitlyMentionedService) {
+        if (explicitlyMentionedServices.length === 0) {
+          // No service name was explicitly present. Keep the generic booking
+          // flow authoritative; never let RAG/LLM discovery guess a service.
           return {
             input,
             rule,
@@ -167,7 +170,26 @@ const semanticStep = RunnableLambda.from(
           };
         }
 
-        discovered = explicitlyMentionedService;
+        if (explicitlyMentionedServices.length > 1) {
+          // Example: "I want to book mechanic" matches both Bike Mechanic and
+          // Car Mechanic. Do not choose one arbitrarily. Ask the user to
+          // specify which canonical service they want.
+          return {
+            input,
+            rule,
+            understood: {
+              intent: 'how_to_book',
+              service: null,
+              entities: {
+                service_options: explicitlyMentionedServices.join(' | ')
+              },
+              confidence: 0.99,
+              conversationState: 'needs_clarification'
+            } as LlmUnderstanding
+          };
+        }
+
+        discovered = explicitlyMentionedServices[0];
       } else {
         discovered = await discoverServiceFromKnowledge(s);
       }
