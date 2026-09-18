@@ -169,7 +169,7 @@ const routeStep = RunnableLambda.from(
     if (semantic.intent === 'how_to_book' && !semantic.service) {
       const genericBookingReplies: Record<string, string> = {
         en: 'To book a service, open the Services section in the JustTap application, select the service you need, and follow the booking instructions shown there.\n\nLearn More',
-        hi: 'सेवा बुक करने के लिए JustTap application में Services section खोलें, अपनी आवश्यक सेवा चुनें और वहाँ दिए गए booking instructions का पालन करें।\n\nLearn More',
+        hi: 'सेवा बुक करने के लिए JustTap ऐप में Services सेक्शन खोलें, अपनी आवश्यक सेवा चुनें और वहाँ दिए गए बुकिंग निर्देशों का पालन करें।\n\nLearn More',
         mr: 'सेवा बुक करण्यासाठी JustTap application मधील Services section उघडा, तुम्हाला आवश्यक असलेली सेवा निवडा आणि तेथे दिलेल्या booking instructions चे पालन करा.\n\nLearn More'
       };
 
