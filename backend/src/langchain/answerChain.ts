@@ -135,39 +135,39 @@ Important:
     const answer = await generate(prompt, input.language);
 
     // Force the correct localized Learn More link.
-    const responseLanguage =
-      input.language.toLowerCase().split(/[-_]/)[0];
+const responseLanguage =
+  input.language.toLowerCase().split(/[-_]/)[0];
 
-    const learnMoreText =
-      responseLanguage === 'hi'
-        ? 'लर्न मोर'
-        : 'Learn More';
+const learnMoreText =
+  responseLanguage === 'hi'
+    ? 'लर्न मोर'
+    : 'Learn More';
 
-    const learnMoreLink =
-      `[${learnMoreText}](https://www.justtapnow.com/about)`;
+const learnMoreLink =
+  `[${learnMoreText}](https://www.justtapnow.com/about)`;
 
-    const learnMorePattern =
-      /(?:learn\s+more|लर्न\s+मोर)/i;
+const learnMorePattern =
+  /learn\s*\*?\*?more\s*\*?\*?(?:\s*\*?\*?\s*[-:]?)|लर्न\s+मोर/i;
 
-    const needsLearnMore =
-      /service|book|booking|cancel|cancellation|price|pricing/i.test(
-        `${input.intent} ${input.normalizedMessage}`
-      );
+const needsLearnMore =
+  /service|book|booking|cancel|cancellation|price|pricing/i.test(
+    `${input.intent} ${input.normalizedMessage}`
+  );
 
-    if (needsLearnMore) {
-      if (learnMorePattern.test(answer)) {
-        return answer.replace(
-          learnMorePattern,
-          learnMoreLink
-        );
-      }
+if (needsLearnMore) {
+  if (learnMorePattern.test(answer)) {
+    return answer.replace(
+      learnMorePattern,
+      learnMoreLink
+    );
+  }
 
-      return `${answer.trim()}
+  return `${answer.trim()}
 
 ${learnMoreLink}`;
-    }
+}
 
-    return answer;
+return answer;
   }
 
   // No sufficiently specific KB record. Use a deterministic safe response
