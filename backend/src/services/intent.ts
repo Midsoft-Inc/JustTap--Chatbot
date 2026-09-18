@@ -34,7 +34,7 @@ const rules: Rule[] = [
   {
     intent: 'goodbye',
     category: 'general',
-    re: /(?:bye|goodbye|good by|g b|good byyy|good beyy|good byyyy|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
+    re: /(?:bye|goodbye|good by|beey|byyy|byyyy|beeeyy|g b|good byyy|good beyy|good byyyy|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
   },
 
   {

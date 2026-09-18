@@ -100,6 +100,42 @@ function canonicalServiceExplicitlyMentioned(value: string | null, message: stri
   return serviceWords.length > 0 && serviceWords.every((word) => queryWords.has(word));
 }
 
+function levenshteinDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + cost
+      );
+    }
+
+    for (let j = 0; j <= b.length; j++) {
+      previous[j] = current[j];
+    }
+  }
+
+  return previous[b.length];
+}
+
+function isLikelyTypoMatch(queryWord: string, serviceWord: string): boolean {
+  if (queryWord.length < 4 || serviceWord.length < 4) return false;
+
+  const distance = levenshteinDistance(queryWord, serviceWord);
+  const maxDistance = serviceWord.length <= 5 ? 1 : 2;
+
+  return distance <= maxDistance;
+}
+
 const deterministicStep = RunnableLambda.from(async (input: SemanticInput) => {
   const rule: IntentResult = classifyIntent(input.normalizedMessage);
   return { input, rule };
@@ -196,6 +232,44 @@ const semanticStep = RunnableLambda.from(
               : null;
           })
           .filter((item): item is { service: string; score: number } => Boolean(item));
+
+        // Typo-tolerant service matching. Only use this when an exact
+        // canonical match was not found. A typo may resolve to a canonical
+        // KB service, but it must never create a new service name.
+        if (serviceMatches.length === 0) {
+          const ignoredBookingWords = new Set([
+            'i', 'we', 'want', 'need', 'would', 'like', 'can', 'could',
+            'how', 'what', 'to', 'a', 'an', 'the', 'me', 'my', 'for',
+            'please', 'book', 'booking', 'service', 'services', 'justtap',
+            'app', 'application', 'in', 'on', 'from', 'get', 'hire',
+            'find', 'do', 'you', 'is', 'it', 'this', 'that'
+          ]);
+
+          const targetWords = [...normalizedWords].filter(
+            (word) => !ignoredBookingWords.has(word)
+          );
+
+          const typoMatches = catalog
+            .map(({ service }) => {
+              const serviceWords = tokenize(service).filter(
+                (word) => !['service', 'services'].includes(word)
+              );
+
+              let matchedWords = 0;
+              for (const queryWord of targetWords) {
+                if (serviceWords.some((serviceWord) => isLikelyTypoMatch(queryWord, serviceWord))) {
+                  matchedWords++;
+                }
+              }
+
+              return matchedWords > 0
+                ? { service, score: matchedWords }
+                : null;
+            })
+            .filter((item): item is { service: string; score: number } => Boolean(item));
+
+          serviceMatches.push(...typoMatches);
+        }
 
         const maxScore = serviceMatches.length
           ? Math.max(...serviceMatches.map((item) => item.score))
@@ -425,7 +499,11 @@ ${input.message}`.trim();
     }
 
     // Deterministic generic-booking behavior is authoritative.
-    if (rule.intent === 'how_to_book' && !canonicalServiceExplicitlyMentioned(discovered, s)) {
+    if (
+      rule.intent === 'how_to_book' &&
+      (!understood || understood.conversationState !== 'needs_clarification') &&
+      !canonicalServiceExplicitlyMentioned(discovered, s)
+    ) {
       understood = {
         intent: 'how_to_book',
         service: null,
