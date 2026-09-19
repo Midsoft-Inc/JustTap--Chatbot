@@ -22,7 +22,7 @@ const rules: Rule[] = [
   {
     intent: 'greeting',
     category: 'general',
-    re: /^(hi|hello|heyy|heyyy|heey|heeeyy|heeyy|heyyy|heyyy|heyyyy|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
+    re: /^(hi|hello||hiiii|hiiii|hiiiii|heyy|heyyy|heey|heeeyy|heeyy|heyyy|heyyy|heyyyy|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
   },
 
   {
