@@ -7,7 +7,7 @@
     "sub_service": null,
     "intent": "knowledge",
     "question": "What services does JustTap provide?",
-    "answer": "JustTap provides Home Services (Plumber, Electrician, Carpenter, AC Technician, Painter), Auto Services (Bike Mechanic, Car Mechanic, Car Wash), Domestic Services (Maid Service, Security Guard, Gardener, Cleaner), Technical Services (Software Developer, Web Designer, Mobile App Developer, Computer Repair Technician, Digital Marketing Expert), Education Services (Online Tutor, Spoken English Trainer, Computer Trainer, Coaching Institute), and Business Services (Accountant, Tax Consultant, CA, Insurance Agent, Financial Advisor).\n\n[Learn More — JustTap](https://www.justtapnow.com/about/)",
+    "answer": "JustTap provides Home Services (Plumber, Electrician, Carpenter, AC Technician, Painter), Auto Services (Bike Mechanic, Car Mechanic, Car Wash), Domestic Services (Maid Service, Security Guard, Gardener, Cleaner), Technical Services (Software Developer, Web Designer, Mobile App Developer, Computer Repair Technician, Digital Marketing Expert), Education Services (Online Tutor, Spoken English Trainer, Computer Trainer, Coaching Institute, Teacher), Business Services (Accountant, Tax Consultant, CA, Insurance Agent, Financial Advisor), Health & Fitness (Physiotherapist, Yoga Trainer), Beauty & Personal Care (Beautician, Hair Stylist), and Event Services (Photographer, Videographer, Event Planner, Caterer, DJ).\n\n[Learn More — JustTap](https://www.justtapnow.com/about/)",
     "keywords": [
       "JustTap",
       "services",
@@ -957,5 +957,510 @@
     ],
     "action": "none",
     "priority": "normal"
+  },
+  {
+    "id": "svc_054",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Physiotherapist",
+    "intent": "service_booking",
+    "question": "I want to book Physiotherapist.",
+    "answer": "To book Physiotherapist, use the Physiotherapist service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Physiotherapist",
+      "book",
+      "booking",
+      "Health & Fitness"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_055",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Physiotherapist",
+    "intent": "service_pricing",
+    "question": "What is the price for Physiotherapist?",
+    "answer": "Check the Physiotherapist pricing information provided in the JustTap application.",
+    "keywords": [
+      "Physiotherapist",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_056",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Yoga Trainer",
+    "intent": "service_booking",
+    "question": "I want to book Yoga Trainer.",
+    "answer": "To book Yoga Trainer, use the Yoga Trainer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Yoga Trainer",
+      "book",
+      "booking",
+      "Health & Fitness"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_057",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Yoga Trainer",
+    "intent": "service_pricing",
+    "question": "What is the price for Yoga Trainer?",
+    "answer": "Check the Yoga Trainer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Yoga Trainer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_058",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Beautician",
+    "intent": "service_booking",
+    "question": "I want to book Beautician.",
+    "answer": "To book Beautician, use the Beautician service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Beautician",
+      "book",
+      "booking",
+      "Beauty & Personal Care"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_059",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Beautician",
+    "intent": "service_pricing",
+    "question": "What is the price for Beautician?",
+    "answer": "Check the Beautician pricing information provided in the JustTap application.",
+    "keywords": [
+      "Beautician",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_060",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Hair Stylist",
+    "intent": "service_booking",
+    "question": "I want to book Hair Stylist.",
+    "answer": "To book Hair Stylist, use the Hair Stylist service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Hair Stylist",
+      "book",
+      "booking",
+      "Beauty & Personal Care"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_061",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Hair Stylist",
+    "intent": "service_pricing",
+    "question": "What is the price for Hair Stylist?",
+    "answer": "Check the Hair Stylist pricing information provided in the JustTap application.",
+    "keywords": [
+      "Hair Stylist",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_062",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Photographer",
+    "intent": "service_booking",
+    "question": "I want to book Photographer.",
+    "answer": "To book Photographer, use the Photographer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Photographer",
+      "book",
+      "booking",
+      "Event Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_063",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Photographer",
+    "intent": "service_pricing",
+    "question": "What is the price for Photographer?",
+    "answer": "Check the Photographer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Photographer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_064",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Videographer",
+    "intent": "service_booking",
+    "question": "I want to book Videographer.",
+    "answer": "To book Videographer, use the Videographer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Videographer",
+      "book",
+      "booking",
+      "Event Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_065",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Videographer",
+    "intent": "service_pricing",
+    "question": "What is the price for Videographer?",
+    "answer": "Check the Videographer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Videographer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_066",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Event Planner",
+    "intent": "service_booking",
+    "question": "I want to book Event Planner.",
+    "answer": "To book Event Planner, use the Event Planner service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Event Planner",
+      "book",
+      "booking",
+      "Event Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_067",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Event Planner",
+    "intent": "service_pricing",
+    "question": "What is the price for Event Planner?",
+    "answer": "Check the Event Planner pricing information provided in the JustTap application.",
+    "keywords": [
+      "Event Planner",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_068",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Caterer",
+    "intent": "service_booking",
+    "question": "I want to book Caterer.",
+    "answer": "To book Caterer, use the Caterer service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Caterer",
+      "book",
+      "booking",
+      "Event Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_069",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Caterer",
+    "intent": "service_pricing",
+    "question": "What is the price for Caterer?",
+    "answer": "Check the Caterer pricing information provided in the JustTap application.",
+    "keywords": [
+      "Caterer",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_070",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "DJ",
+    "intent": "service_booking",
+    "question": "I want to book DJ.",
+    "answer": "To book DJ, use the DJ service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "DJ",
+      "book",
+      "booking",
+      "Event Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_071",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "DJ",
+    "intent": "service_pricing",
+    "question": "What is the price for DJ?",
+    "answer": "Check the DJ pricing information provided in the JustTap application.",
+    "keywords": [
+      "DJ",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_072",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_booking",
+    "sub_service": "Teacher",
+    "intent": "service_booking",
+    "question": "I want to book Teacher.",
+    "answer": "To book Teacher, use the Teacher service option in the JustTap application and follow the booking instructions shown there.",
+    "keywords": [
+      "Teacher",
+      "book",
+      "booking",
+      "Education Services"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "svc_073",
+    "language": "en",
+    "category": "services",
+    "sub_category": "service_price",
+    "sub_service": "Teacher",
+    "intent": "service_pricing",
+    "question": "What is the price for Teacher?",
+    "answer": "Check the Teacher pricing information provided in the JustTap application.",
+    "keywords": [
+      "Teacher",
+      "price",
+      "cost",
+      "pricing"
+    ],
+    "action": "none",
+    "priority": "normal"
+  },
+  {
+    "id": "safety_001",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "account_security",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "Can I share my OTP with a service provider?",
+    "answer": "No. Never share your OTP, PIN, CVV, password, or other confidential security credentials with a service provider.",
+    "keywords": [
+      "safety",
+      "security",
+      "OTP",
+      "PIN",
+      "CVV",
+      "password",
+      "share OTP"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_002",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "account_security",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "How can I protect my JustTap account?",
+    "answer": "Keep your JustTap login credentials private and never share your password, OTP, PIN, or other confidential account information with anyone.",
+    "keywords": [
+      "safety",
+      "security",
+      "account security",
+      "password",
+      "OTP",
+      "PIN",
+      "credentials"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_003",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "payment_security",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "Should I share my CVV or PIN with a service provider?",
+    "answer": "No. Do not share your CVV, PIN, OTP, password, or other confidential payment or account credentials with a service provider.",
+    "keywords": [
+      "safety",
+      "payment security",
+      "CVV",
+      "PIN",
+      "OTP",
+      "payment",
+      "credentials"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_004",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "personal_information",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "Should I share my personal information with a service provider?",
+    "answer": "Share only the information necessary for the service and avoid sharing confidential account, payment, or security credentials.",
+    "keywords": [
+      "safety",
+      "personal information",
+      "privacy",
+      "security",
+      "service provider",
+      "credentials"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_005",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "fraud_awareness",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "What should I do if someone asks for my OTP, PIN, CVV, or password?",
+    "answer": "Do not share the requested information. OTPs, PINs, CVVs, passwords, and other confidential security credentials should be kept private.",
+    "keywords": [
+      "safety",
+      "fraud",
+      "scam",
+      "OTP",
+      "PIN",
+      "CVV",
+      "password",
+      "security"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_006",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "service_provider_safety",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "How can I stay safe when using a JustTap service?",
+    "answer": "Keep your confidential account and payment credentials private. Do not share your OTP, PIN, CVV, password, or other security credentials with a service provider.",
+    "keywords": [
+      "safety",
+      "service safety",
+      "service provider",
+      "OTP",
+      "PIN",
+      "CVV",
+      "password"
+    ],
+    "action": "none",
+    "priority": "high"
+  },
+  {
+    "id": "safety_007",
+    "language": "en",
+    "category": "safety",
+    "sub_category": "safety_guidelines",
+    "sub_service": null,
+    "intent": "safety",
+    "question": "Where can I find JustTap Safety and Guidelines?",
+    "answer": "You can find the JustTap Safety & Guidelines information at https://www.justtapnow.com/safety.",
+    "keywords": [
+      "safety",
+      "guidelines",
+      "safety guidelines",
+      "security",
+      "JustTap safety"
+    ],
+    "action": "none",
+    "priority": "high"
   }
 ]

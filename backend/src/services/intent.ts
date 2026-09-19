@@ -14,6 +14,14 @@ type Rule = {
   supportIssue?: boolean;
 };
 
+/*
+ * IMPORTANT:
+ * Do not put specific services such as plumber, electrician,
+ * carpenter, photographer, etc. here.
+ *
+ * Services are resolved from the knowledge dataset.
+ */
+
 const rules: Rule[] = [
   // =========================================================
   // GENERAL
@@ -22,7 +30,7 @@ const rules: Rule[] = [
   {
     intent: 'greeting',
     category: 'general',
-    re: /^(hi|hello||hiiii|hiiii|hiiiii|heyy|heyyy|heey|heeeyy|heeyy|heyyy|heyyy|heyyyy|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
+    re: /^(hi|hell|heow|heyy|heyy|heey|hlw|hii|hiiii|hiiiii|hiiii|hiiiiii|hiii|hiii|hello|hey|namaste|नमस्ते|नमस्कार|हाय|हॅलो|hii|hiii|helloo|heyy|heey|heyy|heeey|heyyy|heyy|hey there|hi there|hello there|good morning|good afternoon|good evening|good night|sup|wassup|what's up|whats up|hola|bonjour|greetings)\b/iu
   },
 
   {
@@ -34,19 +42,19 @@ const rules: Rule[] = [
   {
     intent: 'goodbye',
     category: 'general',
-    re: /(?:bye|goodbye|good by|byy|byye|byyy|beyy|beeyy|beey|byyy|byyyy|beeeyy|g b|good byyy|good beyy|good byyyy|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
+    re: /(?:bye|by|byy|goodbye|good by|g b|beey|byyy|beeey|byy|byyy|beyy|beyyy|good byyy|good beyy|good byyyy|bye\s+bye|byebye|good\s+bye|see\s+you|see\s+ya|see\s+you\s+later|talk\s+to\s+you\s+later|catch\s+you\s+later|until\s+next\s+time|take\s+care|have\s+a\s+good\s+day|have\s+a\s+nice\s+day|have\s+a\s+good\s+night|good\s+night|farewell|later|later\s+on|ciao|adios|au\s+revoir|अलविदा|फिर\s+मिलेंगे|फिर\s+मिलते\s+हैं|फिर\s+मिलेंगे\s+जल्द|पुन्हा\s+भेटू|पुन्हा\s+भेटूया|नंतर\s+भेटूया|निरोप)/iu
   },
 
   {
     intent: 'help',
     category: 'general',
-    re: /(?:help|how\s+can\s+you\s+help\+syou|can\s+ you\s+ help\s+ me|can\s+you\s+help\s+me|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
+    re: /(?:help|can\s+ you\s+ help\s+ me|can\s+you\s+help\s+me|help\s+me|can\s+you\s+help|could\s+you\s+help|i\s+need\s+help|i\s+need\s+some\s+help|please\s+help|please\s+help\s+me|need\s+help|need\s+some\s+help|help\s+please|assist\s+me|i\s+need\s+assistance|can\s+you\s+assist|support\s+me|मदद|मदद\s+करो|मदद\s+करें|मेरी\s+मदद\s+करो|मेरी\s+मदद\s+करें|मुझे\s+मदद\s+चाहिए|सहायता|सहायता\s+चाहिए|सहाय्य|मदत|मदत\s+करा|मला\s+मदत\s+हवी)(?:\s|$)/iu
   },
 
   {
     intent: 'acknowledgement',
     category: 'general',
-    re: /^(?:yes|yeah|yep|yup|yess|ook|oook|okk|okkk|okkk|okkkk|yash|yaha|yess|yesss|yes\s+please|yeah\s+sure|sure|ok|okay|okey|alright|all\s+right|got\s+it|gotcha|understood|i\s+understand|sure\s+thing|of\s+course|definitely|absolutely|correct|right|that's\s+right|sounds\s+good|sounds\s+great|perfect|great|fine|no\s+problem|no\s+issues|that\s+works|works\s+for\s+me|thanks|thank\s+you|ठीक|ठीक\s+है|ठीक\s+आहे|ठीक\s+आहे\s+ना|समजले|समजलं|समजून\s+घेतलं|बरं|बरं\s+आहे|हो|होय|हो\s+नक्की|हो\s+बरोबर|बरोबर|नक्की|नक्कीच|चालेल|धन्यवाद|धन्यवाद\s+तुमचे)$/iu
+    re: /^(?:yes|yeah|yees|yeess|yep|yup|yess|yes\s+please|yeah\s+sure|sure|ok|okay|okey|alright|all\s+right|got\s+it|gotcha|understood|i\s+understand|sure\s+thing|of\s+course|definitely|absolutely|correct|right|that's\s+right|sounds\s+good|sounds\s+great|perfect|great|fine|no\s+problem|no\s+issues|that\s+works|works\s+for\s+me|thanks|thank\s+you|ठीक|ठीक\s+है|ठीक\s+आहे|ठीक\s+आहे\s+ना|समजले|समजलं|समजून\s+घेतलं|बरं|बरं\s+आहे|हो|होय|हो\s+नक्की|हो\s+बरोबर|बरोबर|नक्की|नक्कीच|चालेल|धन्यवाद|धन्यवाद\s+तुमचे)$/iu
   },
 
   // =========================================================
@@ -112,10 +120,11 @@ const rules: Rule[] = [
   // BOOKING
   // =========================================================
 
- {
+  {
     intent: 'how_to_book',
     category: 'booking',
-    re:/(?:\b(?:how\s+to\s+book|how\s+(?:can\s+i|do\s+i)\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
+    re:
+      /(?:\b(?:how\s+to\s+book|how\s+(?:can\s+i|do\s+i)\s+book|can\s+i\s+book|i\s+(?:want|need)\s+to\s+book|i\s+(?:want|need)\s+(?:a|an)\s+service|(?:need|want|looking\s+for)\s+(?:a\s+)?(?:service|someone)|(?:has|have)\s+to\s+book|please\s+book)\b|(?:बुक|बुकिंग|बुक\s+करना|बुक\s+करनी|सेवा\s+बुक|सेवा\s+कैसे\s+बुक|सेवा\s+बुक\s+करनी|मला\s+सेवा\s+बुक|मी\s+सेवा\s+बुक|मला\s+सेवा\s+हवी))/iu
   },
 
   {
